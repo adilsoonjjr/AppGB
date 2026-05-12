@@ -1,0 +1,114 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Funções auxiliares ---
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function getUserRole() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        ? getUserData().role : null;
+    }
+
+    function getUserRestaurantId() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        ? getUserData().restaurantId : null;
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() && getUserRole() == 'superadmin';
+    }
+
+    function isAdminOf(restaurantId) {
+      return isAuthenticated() && (
+        getUserRole() == 'superadmin' ||
+        (getUserRole() == 'admin' && getUserRestaurantId() == restaurantId)
+      );
+    }
+
+    function isStaffOf(restaurantId) {
+      return isAuthenticated() && (
+        getUserRole() == 'superadmin' ||
+        ((getUserRole() == 'admin' || getUserRole() == 'employee') &&
+          getUserRestaurantId() == restaurantId)
+      );
+    }
+
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    // --- Restaurants ---
+    match /restaurants/{restaurantId} {
+      allow read: if true;
+      // Any authenticated user can create (self-registration), superadmin can also create
+      allow create: if isAuthenticated();
+      allow update: if isAdminOf(restaurantId) || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // --- Users (perfis) ---
+    match /users/{uid} {
+      // Usuário lê/edita o próprio perfil; admin do restaurante lê; superadmin lê tudo
+      allow read: if isOwner(uid) || isSuperAdmin() ||
+        (isAuthenticated() && getUserRole() == 'admin');
+      allow create: if isAuthenticated() && request.auth.uid == uid;
+      allow update: if isOwner(uid) || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // --- Categories ---
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow create, update, delete: if
+        isAdminOf(request.resource.data.restaurantId) ||
+        isAdminOf(resource.data.restaurantId);
+    }
+
+    // --- Products ---
+    match /products/{productId} {
+      allow read: if true;
+      allow create: if isAdminOf(request.resource.data.restaurantId);
+      allow update: if isAdminOf(resource.data.restaurantId);
+      allow delete: if isAdminOf(resource.data.restaurantId);
+    }
+
+    // --- Counters (order number sequence per restaurant) ---
+    match /counters/{counterId} {
+      allow read, write: if true; // Only used server-side in transactions
+    }
+
+    // --- Coupons ---
+    match /coupons/{couponId} {
+      // Qualquer um pode ler (para validar no checkout)
+      allow read: if true;
+      // Apenas admin do restaurante cria/edita/exclui
+      allow create: if isAdminOf(request.resource.data.restaurantId);
+      allow update: if isAdminOf(resource.data.restaurantId);
+      allow delete: if isAdminOf(resource.data.restaurantId);
+    }
+
+    // --- Orders ---
+    match /orders/{orderId} {
+      // Qualquer um pode criar pedido (cliente sem login)
+      allow create: if true;
+
+      // Admin do restaurante pode ler/atualizar; cliente lê o próprio pedido pelo ID
+      allow read: if true;
+
+      // Apenas admin pode atualizar status
+      allow update: if isStaffOf(resource.data.restaurantId) ||
+        (isAuthenticated() &&
+          request.auth.uid == resource.data.customerUid &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notes']));
+
+      allow delete: if isAdminOf(resource.data.restaurantId);
+    }
+  }
+}
