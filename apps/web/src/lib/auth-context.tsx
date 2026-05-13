@@ -4,8 +4,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
   GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
@@ -65,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAppUserState(profile)
     } catch (err) {
       console.error('Erro ao carregar perfil do usuário:', err)
+      // Perfil mínimo para não travar o app
       setAppUserState({
         uid: firebaseUser.uid,
         name: firebaseUser.displayName || '',
@@ -78,13 +78,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    // Captura o resultado do redirect do Google
-    getRedirectResult(auth).then(async result => {
-      if (result?.user) {
-        await loadAppUser(result.user)
-      }
-    }).catch(console.error)
-
     const unsubscribe = onAuthStateChanged(auth, async u => {
       setUser(u)
       if (u) {
@@ -95,7 +88,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false)
     })
     return unsubscribe
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const signIn = async (email: string, password: string) => {
@@ -110,8 +102,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signInWithGoogle = async () => {
-    await signInWithRedirect(auth, googleProvider)
-    // A página vai recarregar — getRedirectResult() acima captura o resultado
+    const cred = await signInWithPopup(auth, googleProvider)
+    await loadAppUser(cred.user)
   }
 
   const logout = async () => {
