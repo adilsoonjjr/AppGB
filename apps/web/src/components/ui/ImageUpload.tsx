@@ -2,7 +2,6 @@
 
 import { useState, useRef } from 'react'
 import { Upload, X, Link, Camera } from 'lucide-react'
-import Image from 'next/image'
 
 const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
 const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
@@ -65,8 +64,9 @@ export default function ImageUpload({ value, onChange, label, aspectRatio = 'wid
 
       {/* Preview */}
       {!!value && (
-        <div className={`relative ${heightClass} rounded-xl overflow-hidden border border-gray-200 group bg-gray-100`}>
-          <Image src={value} alt="Preview" fill className="object-contain" sizes="400px" unoptimized />
+        <div className="relative rounded-xl overflow-hidden border border-gray-200 group bg-gray-100">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={value} alt="Preview" className="w-full h-auto max-h-64 object-contain" />
           <button
             onClick={() => { onChange(''); setUrlInput('') }}
             className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
