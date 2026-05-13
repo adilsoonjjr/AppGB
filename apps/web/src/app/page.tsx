@@ -48,9 +48,8 @@ export default function EntryPage() {
     setBusy(true)
     try {
       await signInWithGoogle()
-      // Redireciona para o Google — ao voltar, auth-context captura o resultado
-    } catch {
-      toast.error('Erro ao entrar com Google')
+    } catch (e: any) {
+      toast.error(`Erro: ${e?.code || e?.message || 'desconhecido'}`)
       setBusy(false)
     }
   }
