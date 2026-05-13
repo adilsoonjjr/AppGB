@@ -239,17 +239,17 @@ export default function CheckoutPage() {
   ].filter(o => o.enabled)
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-8">
+    <div className="min-h-screen bg-gray-50 pb-10">
       <div className="bg-white sticky top-0 z-10 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
-          <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-xl transition">
-            <ArrowLeft size={20} />
+          <button onClick={() => router.back()} className="p-2.5 hover:bg-gray-100 rounded-xl transition">
+            <ArrowLeft size={22} />
           </button>
-          <h1 className="text-lg font-bold">Finalizar Pedido</h1>
+          <h1 className="text-xl font-bold">Finalizar Pedido</h1>
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-4 space-y-4">
+      <div className="max-w-2xl mx-auto px-4 py-5 space-y-5">
         {!user && (
           <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex items-center justify-between">
             <div>
@@ -264,21 +264,22 @@ export default function CheckoutPage() {
         )}
 
         {/* Tipo de pedido */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-          <h2 className="font-semibold text-gray-800 mb-3">Como deseja?</h2>
-          <div className={`grid gap-2 ${orderOptions.length === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <h2 className="font-semibold text-gray-800 mb-4 text-base">Como deseja?</h2>
+          <div className={`grid gap-3 ${orderOptions.length === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
             {orderOptions.map(opt => (
               <button
                 key={opt.value}
                 onClick={() => setOrderType(opt.value as OrderType)}
-                className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition ${
+                className={`flex flex-col items-center gap-1.5 py-4 px-2 rounded-2xl border-2 transition ${
                   orderType === opt.value
                     ? 'border-amber-500 bg-amber-50 text-amber-700'
                     : 'border-gray-200 text-gray-500 hover:border-gray-300'
                 }`}
               >
-                <span className="text-base">{opt.label}</span>
-                {opt.desc && <span className="text-xs opacity-70">{opt.desc}</span>}
+                <span className="text-2xl">{opt.label.split(' ')[0]}</span>
+                <span className="text-sm font-semibold">{opt.label.split(' ').slice(1).join(' ')}</span>
+                {opt.desc && <span className="text-xs opacity-60">{opt.desc}</span>}
               </button>
             ))}
           </div>
@@ -308,8 +309,8 @@ export default function CheckoutPage() {
         )}
 
         {/* Dados pessoais */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-3">
-          <h2 className="font-semibold text-gray-800">Seus dados</h2>
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
+          <h2 className="font-semibold text-gray-800 text-base">Seus dados</h2>
           <Input label="Nome completo" placeholder="João Silva" value={form.name}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))} error={errors.name}
             icon={<User size={15} />} />
@@ -320,8 +321,8 @@ export default function CheckoutPage() {
 
         {/* Endereço de entrega */}
         {orderType === 'delivery' && (
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-3">
-            <h2 className="font-semibold text-gray-800">Endereço de entrega</h2>
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
+            <h2 className="font-semibold text-gray-800 text-base">Endereço de entrega</h2>
 
             {appUser?.savedAddresses && appUser.savedAddresses.length > 0 && (
               <div className="space-y-2">
@@ -361,8 +362,6 @@ export default function CheckoutPage() {
             </div>
             <Input label="Bairro" placeholder="Centro" value={form.neighborhood}
               onChange={e => setForm(f => ({ ...f, neighborhood: e.target.value }))} error={errors.neighborhood} />
-            <Input label="Referência" placeholder="Próximo à padaria..." value={form.complement}
-              onChange={e => setForm(f => ({ ...f, complement: e.target.value }))} />
             <div className="grid grid-cols-3 gap-3">
               <div className="col-span-2">
                 <Input label="Cidade" placeholder="Salvador" value={form.city}
@@ -451,8 +450,8 @@ export default function CheckoutPage() {
         </div>
 
         {/* Resumo */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-          <h2 className="font-semibold text-gray-800 mb-3">Resumo do pedido</h2>
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <h2 className="font-semibold text-gray-800 mb-4 text-base">Resumo do pedido</h2>
           <div className="space-y-2">
             {items.map(item => (
               <div key={item.product.id} className="flex justify-between text-sm">
@@ -486,12 +485,16 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        <Button
-          size="lg" className="w-full !bg-amber-500 hover:!bg-amber-600" onClick={handleSubmit} loading={loading}
-          disabled={!!belowMin}
+        <button
+          onClick={handleSubmit}
+          disabled={loading || !!belowMin}
+          className="w-full py-4 rounded-2xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white text-lg font-bold transition disabled:opacity-50 shadow-lg shadow-amber-500/30"
         >
-          {belowMin ? `Pedido mínimo: ${formatCurrency(minOrder!)}` : 'Confirmar Pedido 🍽️'}
-        </Button>
+          {loading
+            ? <span className="flex items-center justify-center gap-2"><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" /> Processando...</span>
+            : belowMin ? `Pedido mínimo: ${formatCurrency(minOrder!)}` : '🍽️ Confirmar Pedido'
+          }
+        </button>
       </div>
 
       <AuthModal open={authModal} onClose={() => setAuthModal(false)} />
