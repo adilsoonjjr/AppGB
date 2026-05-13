@@ -46,10 +46,17 @@ export async function POST(req: NextRequest) {
 
     const whatsappUrl = getWhatsAppLink(restaurantPhone, message)
 
+    const callmebotKey = process.env.CALLMEBOT_API_KEY
     const apiUrl = process.env.WHATSAPP_API_URL
     const token = process.env.WHATSAPP_TOKEN
 
-    if (apiUrl && token) {
+    if (callmebotKey) {
+      // CallMeBot — gratuito, sem servidor
+      const phone = restaurantPhone.replace(/\D/g, '')
+      const url = `https://api.callmebot.com/whatsapp.php?phone=${phone}&text=${encodeURIComponent(message)}&apikey=${callmebotKey}`
+      await fetch(url).catch(() => {})
+    } else if (apiUrl && token) {
+      // WhatsApp Business API customizada
       await fetch(apiUrl, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
