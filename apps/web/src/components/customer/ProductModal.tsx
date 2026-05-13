@@ -2,13 +2,13 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { Minus, Plus, Clock, X, LogIn, Flame } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { useCart } from '@/lib/cart-context'
 import { useAuth } from '@/lib/auth-context'
 import type { Product } from '@/types'
 import Button from '@/components/ui/Button'
-import AuthModal from './AuthModal'
 import toast from 'react-hot-toast'
 
 interface ProductModalProps {
@@ -20,9 +20,9 @@ interface ProductModalProps {
 export default function ProductModal({ product, open, onClose }: ProductModalProps) {
   const [quantity, setQuantity] = useState(1)
   const [observations, setObservations] = useState('')
-  const [authModalOpen, setAuthModalOpen] = useState(false)
   const { addItem } = useCart()
   const { user } = useAuth()
+  const router = useRouter()
 
   if (!open) return null
 
@@ -30,7 +30,7 @@ export default function ProductModal({ product, open, onClose }: ProductModalPro
 
   const handleAdd = () => {
     if (!user) {
-      setAuthModalOpen(true)
+      router.push('/login')
       return
     }
     addItem(product, quantity, observations)
@@ -120,18 +120,6 @@ export default function ProductModal({ product, open, onClose }: ProductModalPro
         </div>
       </div>
 
-      <AuthModal
-        open={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-        onSuccess={() => {
-          setAuthModalOpen(false)
-          addItem(product, quantity, observations)
-          toast.success(`${product.name} adicionado ao carrinho!`)
-          onClose()
-          setQuantity(1)
-          setObservations('')
-        }}
-      />
     </div>
   )
 }
