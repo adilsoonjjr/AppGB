@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generatePixPayload } from '@/lib/utils'
 import { getRestaurant } from '@/lib/db'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
