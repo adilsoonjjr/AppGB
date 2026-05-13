@@ -14,25 +14,38 @@ import { ChevronDown, Phone, MapPin, Store, Clock, MessageCircle } from 'lucide-
 import toast from 'react-hot-toast'
 
 const STATUS_FLOW: Partial<Record<OrderStatus, OrderStatus>> = {
-  pending: 'preparing',
   confirmed: 'preparing',
   preparing: 'delivering',
-  ready: 'delivered',
   delivering: 'delivered',
 }
 
 const STATUS_PICKUP_FLOW: Partial<Record<OrderStatus, OrderStatus>> = {
-  pending: 'preparing',
   confirmed: 'preparing',
   preparing: 'ready',
   ready: 'delivered',
 }
 
 const STATUS_DINE_IN_FLOW: Partial<Record<OrderStatus, OrderStatus>> = {
-  pending: 'preparing',
   confirmed: 'preparing',
   preparing: 'ready',
   ready: 'delivered',
+}
+
+const CUSTOMER_STATUS_MESSAGES: Partial<Record<OrderStatus, string>> = {
+  confirmed: '✅ Seu pedido foi ACEITO! Estamos preparando. Aguarde.',
+  preparing: '🍳 Seu pedido está sendo preparado!',
+  ready: '✅ Seu pedido está PRONTO para retirada!',
+  delivering: '🛵 Seu pedido saiu para entrega! Chegará em breve.',
+  delivered: '🎉 Pedido entregue! Bom apetite!',
+  cancelled: '❌ Seu pedido foi cancelado. Entre em contato conosco.',
+}
+
+function notifyCustomer(order: Order, status: OrderStatus) {
+  const msg = CUSTOMER_STATUS_MESSAGES[status]
+  if (!msg || !order.customerPhone) return
+  const phone = order.customerPhone.replace(/\D/g, '')
+  const text = `*Galpão Baiano* 🍽️\n\n${msg}\n\nPedido #${order.orderNumber} — Total: R$ ${order.total.toFixed(2).replace('.', ',')}`
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank')
 }
 
 function buildWhatsAppMessage(order: Order): string {
@@ -93,10 +106,43 @@ export default function OrdersPage() {
     setUpdating(true)
     try {
       await updateOrderStatus(order.id, next)
-      toast.success(`Pedido #${order.orderNumber} atualizado!`)
       if (selected?.id === order.id) setSelected({ ...order, status: next })
+      toast(t => (
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium">Pedido #{order.orderNumber} → {ORDER_STATUS_LABELS[next]}</span>
+          <button
+            onClick={() => { notifyCustomer(order, next); toast.dismiss(t.id) }}
+            className="text-xs bg-green-500 text-white px-2 py-1 rounded-lg font-semibold flex-shrink-0"
+          >
+            📲 Avisar cliente
+          </button>
+        </div>
+      ), { duration: 8000 })
     } catch {
       toast.error('Erro ao atualizar pedido')
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const handleAccept = async (order: Order) => {
+    setUpdating(true)
+    try {
+      await updateOrderStatus(order.id, 'confirmed')
+      if (selected?.id === order.id) setSelected({ ...order, status: 'confirmed' })
+      toast(t => (
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium">✅ Pedido #{order.orderNumber} aceito!</span>
+          <button
+            onClick={() => { notifyCustomer(order, 'confirmed'); toast.dismiss(t.id) }}
+            className="text-xs bg-green-500 text-white px-2 py-1 rounded-lg font-semibold flex-shrink-0"
+          >
+            📲 Avisar cliente
+          </button>
+        </div>
+      ), { duration: 10000 })
+    } catch {
+      toast.error('Erro ao aceitar pedido')
     } finally {
       setUpdating(false)
     }
@@ -107,7 +153,17 @@ export default function OrdersPage() {
     setUpdating(true)
     try {
       await updateOrderStatus(order.id, 'cancelled')
-      toast.success('Pedido cancelado')
+      toast(t => (
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium">Pedido #{order.orderNumber} cancelado</span>
+          <button
+            onClick={() => { notifyCustomer(order, 'cancelled'); toast.dismiss(t.id) }}
+            className="text-xs bg-green-500 text-white px-2 py-1 rounded-lg font-semibold flex-shrink-0"
+          >
+            📲 Avisar cliente
+          </button>
+        </div>
+      ), { duration: 8000 })
       setSelected(null)
     } catch {
       toast.error('Erro ao cancelar pedido')
@@ -204,7 +260,24 @@ export default function OrdersPage() {
                 )}
               </div>
 
-              {nextLabel(order) && (
+              {order.status === 'pending' ? (
+                <div className="flex gap-2">
+                  <button
+                    onClick={e => { e.stopPropagation(); handleAccept(order) }}
+                    disabled={updating}
+                    className="flex-1 py-2 rounded-xl bg-green-500 hover:bg-green-600 text-white text-xs font-bold transition disabled:opacity-50"
+                  >
+                    ✅ Aceitar
+                  </button>
+                  <button
+                    onClick={e => { e.stopPropagation(); handleCancel(order) }}
+                    disabled={updating}
+                    className="flex-1 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-xs font-bold transition disabled:opacity-50"
+                  >
+                    ❌ Recusar
+                  </button>
+                </div>
+              ) : nextLabel(order) ? (
                 <Button
                   size="sm"
                   className="w-full"
@@ -213,7 +286,7 @@ export default function OrdersPage() {
                 >
                   → {nextLabel(order)}
                 </Button>
-              )}
+              ) : null}
             </div>
           ))}
         </div>
@@ -318,26 +391,45 @@ export default function OrdersPage() {
               <MessageCircle size={16} /> Enviar WhatsApp
             </a>
 
-            <div className="flex gap-2">
-              {nextLabel(selected) && (
-                <Button
-                  className="flex-1"
-                  onClick={() => handleNextStatus(selected)}
-                  loading={updating}
+            {selected.status === 'pending' ? (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleAccept(selected)}
+                  disabled={updating}
+                  className="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white font-bold transition disabled:opacity-50"
                 >
-                  → {nextLabel(selected)}
-                </Button>
-              )}
-              {selected.status !== 'delivered' && selected.status !== 'cancelled' && (
-                <Button
-                  variant="danger"
+                  ✅ Aceitar pedido
+                </button>
+                <button
                   onClick={() => handleCancel(selected)}
-                  loading={updating}
+                  disabled={updating}
+                  className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold transition disabled:opacity-50"
                 >
-                  Cancelar
-                </Button>
-              )}
-            </div>
+                  ❌ Recusar
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                {nextLabel(selected) && (
+                  <Button
+                    className="flex-1"
+                    onClick={() => handleNextStatus(selected)}
+                    loading={updating}
+                  >
+                    → {nextLabel(selected)}
+                  </Button>
+                )}
+                {selected.status !== 'delivered' && selected.status !== 'cancelled' && (
+                  <Button
+                    variant="danger"
+                    onClick={() => handleCancel(selected)}
+                    loading={updating}
+                  >
+                    Cancelar
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         )}
       </Modal>
