@@ -44,6 +44,7 @@ export default function SettingsPage() {
     deliveryFee: 0, freeDeliveryAbove: 0, minOrderValue: 0,
     pixKey: '', pixName: '', pixCity: '',
     whatsappNumber: '',
+    callmebotApiKey: '',
     deliveryZones: [] as DeliveryZone[],
   })
 
@@ -77,6 +78,7 @@ export default function SettingsPage() {
           pixName: r.pixName || '',
           pixCity: r.city || '',
           whatsappNumber: r.whatsappNumber || '',
+          callmebotApiKey: r.callmebotApiKey || '',
           deliveryZones: r.deliveryZones || [],
         })
         if (r.dailySpecial) setDailySpecial(r.dailySpecial)
@@ -121,6 +123,7 @@ export default function SettingsPage() {
         minOrderValue: Number(form.minOrderValue) || undefined,
         pixKey: form.pixKey, pixName: form.pixName,
         whatsappNumber: form.whatsappNumber,
+        callmebotApiKey: form.callmebotApiKey || undefined,
         deliveryZones: form.deliveryZones,
         dailySpecial,
       })
@@ -420,25 +423,98 @@ export default function SettingsPage() {
 
       {/* WhatsApp */}
       {activeTab === 'whatsapp' && (
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
-          <h3 className="font-semibold text-gray-800">Notificações WhatsApp</h3>
-          <Input label="Número WhatsApp do restaurante (com DDI e DDD)"
-            placeholder="5571999999999"
-            value={form.whatsappNumber} onChange={e => setForm(f => ({ ...f, whatsappNumber: e.target.value }))} />
-          <div className="bg-amber-50 rounded-xl p-3 text-xs text-amber-700 space-y-1">
-            <p className="font-semibold">📱 Como funciona:</p>
-            <p>Quando um pedido é feito, o sistema envia automaticamente uma mensagem com os detalhes para o WhatsApp do restaurante.</p>
-            <p className="mt-1">O botão de contato também aparece para os clientes na tela de acompanhamento do pedido.</p>
+        <div className="space-y-4">
+
+          {/* Número */}
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
+            <h3 className="font-semibold text-gray-800">Número do restaurante</h3>
+            <Input
+              label="WhatsApp do restaurante (com DDI e DDD, só números)"
+              placeholder="5571999999999"
+              value={form.whatsappNumber}
+              onChange={e => setForm(f => ({ ...f, whatsappNumber: e.target.value.replace(/\D/g, '') }))}
+            />
+            <p className="text-xs text-gray-400">Ex: 55 71 99999-9999 → <span className="font-mono">5571999999999</span></p>
+            {form.whatsappNumber && (
+              <a
+                href={`https://wa.me/${form.whatsappNumber}?text=Teste+de+mensagem`}
+                target="_blank" rel="noreferrer"
+                className="flex items-center justify-center gap-2 bg-[#25D366] text-white font-semibold py-2.5 rounded-xl text-sm transition hover:bg-[#20b858]"
+              >
+                📲 Testar número no WhatsApp
+              </a>
+            )}
           </div>
-          {form.whatsappNumber && (
-            <a
-              href={`https://wa.me/${form.whatsappNumber}?text=Teste de mensagem — Galpão Baiano`}
-              target="_blank" rel="noreferrer"
-              className="flex items-center justify-center gap-2 bg-[#25D366] text-white font-semibold py-2.5 rounded-xl text-sm transition hover:bg-[#20b858]"
-            >
-              📲 Testar WhatsApp
-            </a>
-          )}
+
+          {/* Passo a passo CallMeBot */}
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-gray-800">Notificação automática (CallMeBot — grátis)</h3>
+              {form.callmebotApiKey && (
+                <span className="text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full">✓ Ativo</span>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex gap-3">
+                <div className="w-7 h-7 bg-amber-500 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">1</div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">Salvar contato no celular</p>
+                  <p className="text-xs text-gray-500 mt-0.5">No WhatsApp que vai receber os pedidos, salve o número abaixo como contato:</p>
+                  <div className="mt-1.5 bg-gray-50 rounded-lg px-3 py-2 font-mono text-sm font-bold text-gray-800 flex items-center justify-between">
+                    +34 644 60 49 16
+                    <button
+                      onClick={() => { navigator.clipboard.writeText('+34 644 60 49 16'); toast.success('Número copiado!') }}
+                      className="text-xs text-amber-600 font-sans font-semibold"
+                    >Copiar</button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="w-7 h-7 bg-amber-500 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">2</div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">Enviar mensagem de ativação</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Mande essa mensagem exata para o contato CallMeBot no WhatsApp:</p>
+                  <div className="mt-1.5 bg-gray-50 rounded-lg px-3 py-2 font-mono text-sm text-gray-800 flex items-center justify-between gap-2">
+                    <span>I allow callmebot to send me messages</span>
+                    <button
+                      onClick={() => { navigator.clipboard.writeText('I allow callmebot to send me messages'); toast.success('Mensagem copiada!') }}
+                      className="text-xs text-amber-600 font-sans font-semibold flex-shrink-0"
+                    >Copiar</button>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">Em segundos você recebe a sua <strong>API Key</strong> de resposta.</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="w-7 h-7 bg-amber-500 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">3</div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-gray-800">Cole a API Key abaixo e salve</p>
+                  <p className="text-xs text-gray-500 mt-0.5">A key tem 6 dígitos e vem na resposta do CallMeBot.</p>
+                  <div className="mt-2">
+                    <Input
+                      label=""
+                      placeholder="Ex: 123456"
+                      value={form.callmebotApiKey}
+                      onChange={e => setForm(f => ({ ...f, callmebotApiKey: e.target.value.trim() }))}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {form.callmebotApiKey && form.whatsappNumber && (
+              <div className="bg-green-50 rounded-xl p-3 text-sm text-green-700 font-medium">
+                ✅ Tudo configurado! Cada novo pedido enviará uma mensagem automática para {form.whatsappNumber}.
+              </div>
+            )}
+            {form.callmebotApiKey && !form.whatsappNumber && (
+              <div className="bg-amber-50 rounded-xl p-3 text-sm text-amber-700">
+                ⚠️ Informe o número do WhatsApp do restaurante acima.
+              </div>
+            )}
+          </div>
         </div>
       )}
 

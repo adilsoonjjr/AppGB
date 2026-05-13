@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
 
     const whatsappUrl = getWhatsAppLink(restaurantPhone, message)
 
-    const callmebotKey = process.env.CALLMEBOT_API_KEY
+    const callmebotKey = restaurant?.callmebotApiKey || process.env.CALLMEBOT_API_KEY
     const apiUrl = process.env.WHATSAPP_API_URL
     const token = process.env.WHATSAPP_TOKEN
 
