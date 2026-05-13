@@ -273,32 +273,6 @@ export default function MenuPage() {
           )
         ) : (
           <>
-            {/* Prato do Dia */}
-            {dailySpecial?.active && (
-              <section className="bg-gradient-to-r from-amber-600 to-amber-500 rounded-2xl p-4 text-white shadow-lg">
-                <div className="flex items-center gap-2 mb-3">
-                  <Star size={18} className="fill-white" />
-                  <span className="font-bold text-sm uppercase tracking-wide">Prato do Dia</span>
-                </div>
-                <div className="flex gap-4">
-                  {dailySpecial.imageUrl && (
-                    <img
-                      src={dailySpecial.imageUrl}
-                      alt={dailySpecial.name}
-                      className="w-24 h-24 rounded-xl object-cover flex-shrink-0 border-2 border-white/30"
-                    />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-lg leading-tight">{dailySpecial.name}</h3>
-                    <p className="text-amber-100 text-sm mt-1 line-clamp-2">{dailySpecial.description}</p>
-                    <div className="flex items-center justify-between mt-3">
-                      <span className="text-2xl font-bold">{formatCurrency(dailySpecial.price)}</span>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            )}
-
             {/* Promoções */}
             {promoProducts.length > 0 && (
               <section>
