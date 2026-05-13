@@ -72,19 +72,19 @@ export default function ProductsPage() {
     }
     setSaving(true)
     try {
-      const data = {
+      const data: Record<string, any> = {
         name: form.name.trim(),
         description: form.description.trim(),
         price: parseFloat(form.price),
         categoryId: form.categoryId,
         available: form.available,
         order: form.order,
-        imageUrl: form.imageUrl || undefined,
         isPromotion: form.isPromotion,
-        promotionalPrice: form.isPromotion && form.promotionalPrice ? parseFloat(form.promotionalPrice) : undefined,
-        promotionLabel: form.isPromotion && form.promotionLabel ? form.promotionLabel : undefined,
         isFeatured: form.isFeatured,
       }
+      if (form.imageUrl) data.imageUrl = form.imageUrl
+      if (form.isPromotion && form.promotionalPrice) data.promotionalPrice = parseFloat(form.promotionalPrice)
+      if (form.isPromotion && form.promotionLabel) data.promotionLabel = form.promotionLabel
       if (editing) {
         await updateProduct(editing.id, data)
         toast.success('Produto atualizado!')
