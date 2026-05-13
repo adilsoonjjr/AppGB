@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { buildOrderWhatsAppMessage, getWhatsAppLink } from '@/lib/utils'
 import { getRestaurant } from '@/lib/db'
 
+export const dynamic = 'force-dynamic'
+
 const MAX_STR = 500
 
 function isShortString(v: unknown, max = MAX_STR) {
