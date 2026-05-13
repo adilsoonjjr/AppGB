@@ -21,7 +21,7 @@ export default function ImageUpload({ value, onChange, label, aspectRatio = 'wid
   const [urlInput, setUrlInput] = useState(value ?? '')
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const heightClass = aspectRatio === 'square' ? 'h-32 w-32' : aspectRatio === 'cover' ? 'h-40 w-full' : 'h-32 w-full'
+  const heightClass = aspectRatio === 'square' ? 'h-32 w-32' : aspectRatio === 'cover' ? 'h-52 w-full' : 'h-40 w-full'
 
   const uploadToCloudinary = async (file: File) => {
     if (!CLOUD_NAME || !UPLOAD_PRESET) {
@@ -65,8 +65,8 @@ export default function ImageUpload({ value, onChange, label, aspectRatio = 'wid
 
       {/* Preview */}
       {!!value && (
-        <div className={`relative ${heightClass} rounded-xl overflow-hidden border border-gray-200 group`}>
-          <Image src={value} alt="Preview" fill className="object-cover" sizes="400px" unoptimized />
+        <div className={`relative ${heightClass} rounded-xl overflow-hidden border border-gray-200 group bg-gray-100`}>
+          <Image src={value} alt="Preview" fill className="object-contain" sizes="400px" unoptimized />
           <button
             onClick={() => { onChange(''); setUrlInput('') }}
             className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
