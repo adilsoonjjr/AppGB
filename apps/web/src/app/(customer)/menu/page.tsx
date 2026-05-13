@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Search, User, LogOut, LogIn, ClipboardList, MessageCircle, Star, Flame } from 'lucide-react'
+import { Search, User, LogOut, LogIn, ClipboardList, MessageCircle, Star, Flame, X } from 'lucide-react'
 import { getCategories, getProducts, getRestaurant } from '@/lib/db'
 import type { Category, Product, Restaurant } from '@/types'
 import ProductCard from '@/components/customer/ProductCard'
@@ -11,6 +11,7 @@ import { useAuth } from '@/lib/auth-context'
 import { useCart } from '@/lib/cart-context'
 import { useRouter } from 'next/navigation'
 import { formatCurrency } from '@/lib/utils'
+import toast from 'react-hot-toast'
 
 const RESTAURANT_ID = process.env.NEXT_PUBLIC_RESTAURANT_ID || 'default'
 
@@ -25,6 +26,7 @@ export default function MenuPage() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [showDailyPopup, setShowDailyPopup] = useState(false)
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({})
 
   const restaurantName = restaurant?.name || process.env.NEXT_PUBLIC_RESTAURANT_NAME || 'Galpão Baiano'
@@ -42,6 +44,9 @@ export default function MenuPage() {
         setProducts(prods)
         setRestaurant(rest)
         if (cats.length > 0) setActiveCategory(cats[0].id)
+        if (rest?.dailySpecial?.active && !sessionStorage.getItem('daily-special-dismissed')) {
+          setShowDailyPopup(true)
+        }
       } finally {
         setLoading(false)
       }
@@ -74,8 +79,99 @@ export default function MenuPage() {
   const dailySpecial = restaurant?.dailySpecial
   const isOpen = restaurant?.isOpen !== false
 
+  const closeDailyPopup = () => {
+    setShowDailyPopup(false)
+    sessionStorage.setItem('daily-special-dismissed', '1')
+  }
+
+  const handleDailySpecialAdd = () => {
+    if (!user) {
+      closeDailyPopup()
+      router.push('/login')
+      return
+    }
+    if (!dailySpecial) return
+    const pseudoProduct = {
+      id: 'daily-special',
+      restaurantId: RESTAURANT_ID,
+      categoryId: '',
+      name: dailySpecial.name,
+      description: dailySpecial.description || '',
+      price: dailySpecial.price,
+      imageUrl: dailySpecial.imageUrl || '',
+      available: true,
+      isFeatured: false,
+      isPromotion: false,
+      order: 0,
+      createdAt: '',
+      updatedAt: '',
+    }
+    addItem(pseudoProduct as any, 1, '')
+    toast.success(`${dailySpecial.name} adicionado ao carrinho!`)
+    closeDailyPopup()
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 pb-28">
+      {/* Prato do Dia Popup */}
+      {showDailyPopup && dailySpecial?.active && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeDailyPopup} />
+          <div className="relative bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+            <button
+              onClick={closeDailyPopup}
+              className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow"
+            >
+              <X size={16} />
+            </button>
+
+            {dailySpecial.imageUrl && (
+              <div className="relative h-48 w-full">
+                <img src={dailySpecial.imageUrl} alt={dailySpecial.name} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                <div className="absolute bottom-3 left-4 flex items-center gap-2 text-white">
+                  <Star size={16} className="fill-amber-400 text-amber-400" />
+                  <span className="text-xs font-bold uppercase tracking-wider">Prato do Dia</span>
+                </div>
+              </div>
+            )}
+
+            {!dailySpecial.imageUrl && (
+              <div className="bg-gradient-to-r from-amber-500 to-amber-600 px-5 pt-5 pb-3 flex items-center gap-2 text-white">
+                <Star size={18} className="fill-white" />
+                <span className="font-bold text-sm uppercase tracking-wider">Prato do Dia</span>
+              </div>
+            )}
+
+            <div className="p-5 space-y-3">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">{dailySpecial.name}</h2>
+                {dailySpecial.description && (
+                  <p className="text-gray-500 text-sm mt-1 leading-relaxed">{dailySpecial.description}</p>
+                )}
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-bold text-amber-600">{formatCurrency(dailySpecial.price)}</span>
+              </div>
+              <div className="flex gap-3 pt-1">
+                <button
+                  onClick={closeDailyPopup}
+                  className="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition"
+                >
+                  Fechar
+                </button>
+                <button
+                  onClick={handleDailySpecialAdd}
+                  className="flex-1 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold transition"
+                >
+                  {user ? 'Adicionar ao carrinho' : 'Entrar para pedir'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Cover Image */}
       {restaurant?.coverImage && (
         <div className="relative h-72 sm:h-80 overflow-hidden">
