@@ -94,8 +94,13 @@ export default function ProductsPage() {
       }
       await load()
       setModalOpen(false)
-    } catch {
-      toast.error('Erro ao salvar produto')
+    } catch (err: any) {
+      console.error('Erro ao salvar produto:', err)
+      if (err?.code === 'permission-denied') {
+        toast.error('Sem permissão. Verifique seu acesso de administrador.')
+      } else {
+        toast.error('Erro ao salvar produto: ' + (err?.message || 'tente novamente'))
+      }
     } finally {
       setSaving(false)
     }

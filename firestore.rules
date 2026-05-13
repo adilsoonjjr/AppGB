@@ -28,15 +28,18 @@ service cloud.firestore {
     function isAdminOf(restaurantId) {
       return isAuthenticated() && (
         getUserRole() == 'superadmin' ||
-        (getUserRole() == 'admin' && getUserRestaurantId() == restaurantId)
+        (getUserRole() == 'admin' && (
+          getUserRestaurantId() == restaurantId || getUserRestaurantId() == null
+        ))
       );
     }
 
     function isStaffOf(restaurantId) {
       return isAuthenticated() && (
         getUserRole() == 'superadmin' ||
-        ((getUserRole() == 'admin' || getUserRole() == 'employee') &&
-          getUserRestaurantId() == restaurantId)
+        ((getUserRole() == 'admin' || getUserRole() == 'employee') && (
+          getUserRestaurantId() == restaurantId || getUserRestaurantId() == null
+        ))
       );
     }
 
