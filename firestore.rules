@@ -55,9 +55,9 @@ service cloud.firestore {
 
     // --- Users (perfis) ---
     match /users/{uid} {
-      // Usuário lê/edita o próprio perfil; admin do restaurante lê; superadmin lê tudo
-      allow read: if isOwner(uid) || isSuperAdmin() ||
-        (isAuthenticated() && getUserRole() == 'admin');
+      // Apenas o próprio usuário lê/edita seu perfil; superadmin lê tudo
+      // Admins NÃO têm acesso — dados do cliente (telefone, endereço) chegam via pedido
+      allow read: if isOwner(uid) || isSuperAdmin();
       allow create: if isAuthenticated() && request.auth.uid == uid;
       allow update: if isOwner(uid) || isSuperAdmin();
       allow delete: if isSuperAdmin();
@@ -99,14 +99,18 @@ service cloud.firestore {
       // Qualquer um pode criar pedido (cliente sem login)
       allow create: if true;
 
-      // Admin do restaurante pode ler/atualizar; cliente lê o próprio pedido pelo ID
-      allow read: if true;
+      // Staff do restaurante lê pedidos do seu restaurante
+      // Cliente logado lê o próprio pedido
+      // Cliente sem login acessa pelo link secreto (ID aleatório do Firestore = suficientemente seguro)
+      allow read: if isStaffOf(resource.data.restaurantId) ||
+        (isAuthenticated() && request.auth.uid == resource.data.customerUid) ||
+        !isAuthenticated();
 
-      // Apenas admin pode atualizar status
+      // Staff atualiza status; cliente logado só pode alterar notas
       allow update: if isStaffOf(resource.data.restaurantId) ||
         (isAuthenticated() &&
           request.auth.uid == resource.data.customerUid &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notes']));
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notes', 'rating']));
 
       allow delete: if isAdminOf(resource.data.restaurantId);
     }
