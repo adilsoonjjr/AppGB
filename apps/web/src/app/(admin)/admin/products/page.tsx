@@ -16,7 +16,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 const emptyForm = {
   name: '', description: '', price: '', categoryId: '',
-  available: true, preparationTime: '', order: 0, imageUrl: '',
+  available: true, order: 0, imageUrl: '',
   isPromotion: false, promotionalPrice: '', promotionLabel: '', isFeatured: false,
 }
 
@@ -53,7 +53,6 @@ export default function ProductsPage() {
     setForm({
       name: p.name, description: p.description, price: p.price.toString(),
       categoryId: p.categoryId, available: p.available,
-      preparationTime: p.preparationTime?.toString() || '',
       order: p.order, imageUrl: p.imageUrl || '',
       isPromotion: p.isPromotion || false,
       promotionalPrice: p.promotionalPrice?.toString() || '',
@@ -79,7 +78,6 @@ export default function ProductsPage() {
         price: parseFloat(form.price),
         categoryId: form.categoryId,
         available: form.available,
-        preparationTime: form.preparationTime ? parseInt(form.preparationTime) : undefined,
         order: form.order,
         imageUrl: form.imageUrl || undefined,
         isPromotion: form.isPromotion,
@@ -235,12 +233,8 @@ export default function ProductsPage() {
               className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none" />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Input label="Preço (R$)" type="number" step="0.01" placeholder="0,00" value={form.price}
-              onChange={e => setForm(f => ({ ...f, price: e.target.value }))} />
-            <Input label="Tempo de preparo (min)" type="number" placeholder="30" value={form.preparationTime}
-              onChange={e => setForm(f => ({ ...f, preparationTime: e.target.value }))} />
-          </div>
+          <Input label="Preço (R$)" type="number" step="0.01" placeholder="0,00" value={form.price}
+            onChange={e => setForm(f => ({ ...f, price: e.target.value }))} />
 
           <div>
             <label className="text-sm font-medium text-gray-700 block mb-1">Categoria</label>

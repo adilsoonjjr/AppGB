@@ -32,14 +32,15 @@ export default function Modal({ open, onClose, title, children, size = 'md' }: M
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
       <div
         className={cn(
-          'relative bg-white rounded-2xl shadow-2xl w-full animate-in slide-in-from-bottom-4 duration-300 flex flex-col max-h-[90vh]',
+          'relative bg-white rounded-2xl shadow-2xl w-full animate-in slide-in-from-bottom-4 duration-300 flex flex-col',
+          'max-h-[85vh]',
           sizes[size]
         )}
       >
@@ -54,7 +55,7 @@ export default function Modal({ open, onClose, title, children, size = 'md' }: M
             </button>
           </div>
         )}
-        <div className="p-5 overflow-y-auto">{children}</div>
+        <div className="p-5 overflow-y-auto min-h-0 flex-1">{children}</div>
       </div>
     </div>
   )
