@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import {
   Search, LogIn, LogOut, User, ClipboardList,
-  Mail, Lock, Eye, EyeOff, ArrowRight, ChevronLeft, Phone, MapPin, UtensilsCrossed,
+  Mail, Lock, Eye, EyeOff, ArrowRight, ChevronLeft, Phone, MapPin, UtensilsCrossed, ExternalLink,
 } from 'lucide-react'
 import { getCategories, getProducts, setAppUser } from '@/lib/db'
 import { useRestaurant } from '@/lib/restaurant-context'
@@ -586,6 +586,35 @@ function MenuContent({ onLogout }: { onLogout: () => void }) {
           })
         )}
       </div>
+
+      {/* Footer */}
+      {(restaurant?.address || restaurant?.mapsUrl) && (
+        <div className="max-w-2xl mx-auto px-4 pb-36 pt-2">
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${primaryColor}15` }}>
+              <MapPin size={20} style={{ color: primaryColor }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Onde estamos</p>
+              {restaurant.address && (
+                <p className="text-sm text-gray-700 mt-0.5 leading-snug">{restaurant.address}</p>
+              )}
+            </div>
+            {restaurant.mapsUrl && (
+              <a
+                href={restaurant.mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-shrink-0 flex items-center gap-1.5 text-white text-xs font-bold px-3 py-2 rounded-xl transition active:scale-95"
+                style={{ backgroundColor: primaryColor }}
+              >
+                <MapPin size={13} />
+                Maps
+              </a>
+            )}
+          </div>
+        </div>
+      )}
 
       <CartButton />
     </div>
