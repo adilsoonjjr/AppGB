@@ -95,7 +95,6 @@ export interface Restaurant {
   pixKey?: string
   pixName?: string
   whatsappNumber?: string
-  email?: string
   callmebotApiKey?: string
   mapsUrl?: string
   deliveryEnabled: boolean
