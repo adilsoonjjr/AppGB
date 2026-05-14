@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { TrendingUp, ShoppingBag, Clock, CheckCircle, ArrowRight, BarChart2, Receipt, Wallet } from 'lucide-react'
-import { subscribeToOrders } from '@/lib/db'
+import { subscribeToOrders, getRestaurant, updateRestaurant } from '@/lib/db'
 import { useAuth } from '@/lib/auth-context'
 import type { Order } from '@/types'
+import toast from 'react-hot-toast'
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '@/types'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import Badge from '@/components/ui/Badge'
@@ -32,6 +33,26 @@ function DashboardPageInner() {
   const [orders, setOrders] = useState<Order[]>([])
   const [todayOrders, setTodayOrders] = useState<Order[]>([])
   const [monthOrders, setMonthOrders] = useState<Order[]>([])
+  const [isOpen, setIsOpen] = useState<boolean>(true)
+  const [togglingOpen, setTogglingOpen] = useState(false)
+
+  useEffect(() => {
+    getRestaurant(restaurantId).then(r => { if (r) setIsOpen(r.isOpen !== false) })
+  }, [restaurantId])
+
+  const handleToggleOpen = async () => {
+    setTogglingOpen(true)
+    try {
+      const next = !isOpen
+      await updateRestaurant(restaurantId, { isOpen: next })
+      setIsOpen(next)
+      toast.success(next ? 'Restaurante aberto!' : 'Restaurante fechado!')
+    } catch {
+      toast.error('Erro ao atualizar status')
+    } finally {
+      setTogglingOpen(false)
+    }
+  }
 
   useEffect(() => {
     const unsub = subscribeToOrders(all => {
@@ -87,9 +108,21 @@ function DashboardPageInner() {
 
   return (
     <div className="space-y-6 max-w-6xl">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-500 text-sm">Visão geral do restaurante</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-500 text-sm">Visão geral do restaurante</p>
+        </div>
+        <button
+          onClick={handleToggleOpen}
+          disabled={togglingOpen}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition disabled:opacity-60 ${
+            isOpen ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-600 hover:bg-red-200'
+          }`}
+        >
+          <span className={`w-2.5 h-2.5 rounded-full ${isOpen ? 'bg-green-500' : 'bg-red-500'}`} />
+          {togglingOpen ? 'Atualizando...' : isOpen ? 'Aberto' : 'Fechado'}
+        </button>
       </div>
 
       {/* Stats row 1 */}

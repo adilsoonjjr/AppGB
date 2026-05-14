@@ -440,8 +440,15 @@ function MenuContent({ onLogout }: { onLogout: () => void }) {
 
   const primaryColor = restaurant?.primaryColor || '#ef4444'
 
+  const isOpen = restaurant?.isOpen !== false
+
   return (
     <div className="min-h-screen bg-gray-50 pb-28">
+      {!isOpen && (
+        <div className="bg-red-500 text-white text-sm font-semibold text-center py-2.5 px-4">
+          🔴 Restaurante fechado no momento — pedidos não estão sendo aceitos
+        </div>
+      )}
       <div className="bg-white sticky top-0 z-30 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-3">
@@ -449,7 +456,12 @@ function MenuContent({ onLogout }: { onLogout: () => void }) {
               {restaurant?.logo && (
                 <img src={restaurant.logo} alt={restaurant.name} className="w-10 h-10 rounded-xl object-cover" />
               )}
-              <h1 className="text-xl font-bold text-gray-900">{restaurant?.name}</h1>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">{restaurant?.name}</h1>
+                <span className={`text-xs font-semibold ${isOpen ? 'text-green-600' : 'text-red-500'}`}>
+                  {isOpen ? '● Aberto' : '● Fechado'}
+                </span>
+              </div>
             </div>
 
             <div className="relative">
