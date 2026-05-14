@@ -142,57 +142,57 @@ function LoginGate({ onBrowse }: { onBrowse: () => void }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col relative">
+    <div className="min-h-dvh flex flex-col relative overflow-y-auto">
       {/* Background */}
       {restaurant?.coverImage ? (
         <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          className="fixed inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url('${restaurant.coverImage}')` }}
         />
       ) : (
-        <div className="absolute inset-0" style={{ backgroundColor: primaryColor }} />
+        <div className="fixed inset-0" style={{ backgroundColor: primaryColor }} />
       )}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/75" />
+      <div className="fixed inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/75" />
 
-      <div className="relative flex-1 flex flex-col items-center justify-center px-5 py-10 gap-6">
+      <div className="relative flex-1 flex flex-col items-center justify-start px-4 pt-10 pb-8 gap-5">
 
         {/* Brand */}
         <div className="text-center">
           {restaurant?.logo ? (
             <img src={restaurant.logo} alt={restaurant.name}
-              className="w-20 h-20 rounded-3xl object-cover mx-auto mb-4 shadow-2xl ring-4 ring-white/20" />
+              className="w-28 h-28 rounded-3xl object-cover mx-auto mb-4 shadow-2xl ring-4 ring-white/20" />
           ) : (
-            <div className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-2xl ring-4 ring-white/20"
+            <div className="w-28 h-28 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-2xl ring-4 ring-white/20"
               style={{ backgroundColor: primaryColor }}>
-              <UtensilsCrossed size={36} className="text-white" />
+              <UtensilsCrossed size={48} className="text-white" />
             </div>
           )}
-          <h1 className="text-4xl font-bold text-white tracking-tight drop-shadow-lg">{restaurant?.name}</h1>
+          <h1 className="text-3xl font-bold text-white tracking-tight drop-shadow-lg">{restaurant?.name}</h1>
           {restaurant?.phone && (
             <p className="text-white/60 text-sm mt-1">{restaurant.phone}</p>
           )}
         </div>
 
         {/* Card */}
-        <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden">
+        <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden">
 
-          <div className="border-b border-gray-100 px-6 py-4" style={{ backgroundColor: `${primaryColor}15` }}>
+          <div className="border-b border-gray-100 px-5 py-4" style={{ backgroundColor: `${primaryColor}15` }}>
             {mode === 'reset' ? (
               <div className="flex items-center gap-2">
                 <button onClick={() => go('login')} className="hover:opacity-70 transition" style={{ color: primaryColor }}>
-                  <ChevronLeft size={20} />
+                  <ChevronLeft size={22} />
                 </button>
-                <p className="font-semibold text-gray-700">Recuperar senha</p>
+                <p className="font-semibold text-gray-700 text-base">Recuperar senha</p>
               </div>
             ) : (
               <div className="flex gap-1 rounded-2xl p-1" style={{ backgroundColor: `${primaryColor}25` }}>
                 <button onClick={() => go('login')}
-                  className="flex-1 py-2 text-sm font-semibold rounded-xl transition"
+                  className="flex-1 py-2.5 text-base font-semibold rounded-xl transition"
                   style={mode === 'login' ? { backgroundColor: 'white', color: primaryColor } : { color: primaryColor }}>
                   Entrar
                 </button>
                 <button onClick={() => go('register')}
-                  className="flex-1 py-2 text-sm font-semibold rounded-xl transition"
+                  className="flex-1 py-2.5 text-base font-semibold rounded-xl transition"
                   style={mode === 'register' ? { backgroundColor: 'white', color: primaryColor } : { color: primaryColor }}>
                   Criar conta
                 </button>
@@ -200,7 +200,7 @@ function LoginGate({ onBrowse }: { onBrowse: () => void }) {
             )}
           </div>
 
-          <div className="px-6 py-5 space-y-3 max-h-[55vh] overflow-y-auto">
+          <div className="px-5 py-5 space-y-3">
 
             {mode === 'login' && (
               <>
@@ -208,7 +208,7 @@ function LoginGate({ onBrowse }: { onBrowse: () => void }) {
                   <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input type="email" placeholder="E-mail" value={email}
                     onChange={e => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2"
+                    className="w-full pl-10 pr-4 py-3.5 rounded-xl border border-gray-200 text-base focus:outline-none focus:ring-2"
                     style={{ '--tw-ring-color': primaryColor } as any} />
                 </div>
                 <div className="relative">
@@ -216,7 +216,7 @@ function LoginGate({ onBrowse }: { onBrowse: () => void }) {
                   <input type={showPass ? 'text' : 'password'} placeholder="Senha" value={password}
                     onChange={e => setPassword(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                    className="w-full pl-10 pr-10 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2"
+                    className="w-full pl-10 pr-10 py-3.5 rounded-xl border border-gray-200 text-base focus:outline-none focus:ring-2"
                     style={{ '--tw-ring-color': primaryColor } as any} />
                   <button type="button" onClick={() => setShowPass(s => !s)}
                     className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400">
@@ -229,7 +229,7 @@ function LoginGate({ onBrowse }: { onBrowse: () => void }) {
                   </button>
                 </div>
                 <button onClick={handleLogin} disabled={busy}
-                  className="w-full text-white font-bold py-3 rounded-2xl transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg"
+                  className="w-full text-white font-bold py-4 rounded-2xl transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg text-base"
                   style={{ backgroundColor: primaryColor }}>
                   {busy
                     ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -245,11 +245,11 @@ function LoginGate({ onBrowse }: { onBrowse: () => void }) {
                   <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input type="email" placeholder="E-mail" value={email}
                     onChange={e => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2"
+                    className="w-full pl-10 pr-4 py-3.5 rounded-xl border border-gray-200 text-base focus:outline-none focus:ring-2"
                     style={{ '--tw-ring-color': primaryColor } as any} />
                 </div>
                 <button onClick={handleReset} disabled={busy}
-                  className="w-full text-white font-bold py-3 rounded-2xl transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg"
+                  className="w-full text-white font-bold py-4 rounded-2xl transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg text-base"
                   style={{ backgroundColor: primaryColor }}>
                   {busy
                     ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -273,12 +273,12 @@ function LoginGate({ onBrowse }: { onBrowse: () => void }) {
                       {key === 'email' ? (
                         <input type={type} placeholder={placeholder} value={(reg as any)[key]}
                           onChange={e => setReg(r => ({ ...r, [key]: e.target.value }))}
-                          className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 ${errors[key] ? 'border-red-400' : 'border-gray-200'}`}
+                          className={`w-full pl-10 pr-4 py-3.5 rounded-xl border text-base focus:outline-none focus:ring-2 ${errors[key] ? 'border-red-400' : 'border-gray-200'}`}
                           style={{ '--tw-ring-color': primaryColor } as any} />
                       ) : (
                         <input type={type} placeholder={placeholder} value={(reg as any)[key]}
                           onChange={e => setReg(r => ({ ...r, [key]: e.target.value }))}
-                          className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 ${errors[key] ? 'border-red-400' : 'border-gray-200'}`}
+                          className={`w-full pl-10 pr-4 py-3.5 rounded-xl border text-base focus:outline-none focus:ring-2 ${errors[key] ? 'border-red-400' : 'border-gray-200'}`}
                           style={{ '--tw-ring-color': primaryColor } as any} />
                       )}
                     </div>
@@ -291,7 +291,7 @@ function LoginGate({ onBrowse }: { onBrowse: () => void }) {
                     <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input type={showPass ? 'text' : 'password'} placeholder="Senha (mínimo 6 caracteres) *"
                       value={reg.password} onChange={e => setReg(r => ({ ...r, password: e.target.value }))}
-                      className={`w-full pl-10 pr-10 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 ${errors.password ? 'border-red-400' : 'border-gray-200'}`}
+                      className={`w-full pl-10 pr-10 py-3.5 rounded-xl border text-base focus:outline-none focus:ring-2 ${errors.password ? 'border-red-400' : 'border-gray-200'}`}
                       style={{ '--tw-ring-color': primaryColor } as any} />
                     <button type="button" onClick={() => setShowPass(s => !s)}
                       className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400">
@@ -308,7 +308,7 @@ function LoginGate({ onBrowse }: { onBrowse: () => void }) {
                   <input placeholder="CEP *" value={reg.cep}
                     onChange={e => setReg(r => ({ ...r, cep: formatCep(e.target.value) }))}
                     onBlur={handleCepBlur} maxLength={9}
-                    className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 ${errors.cep ? 'border-red-400' : 'border-gray-200'}`}
+                    className={`w-full pl-10 pr-4 py-3.5 rounded-xl border text-base focus:outline-none focus:ring-2 ${errors.cep ? 'border-red-400' : 'border-gray-200'}`}
                     style={{ '--tw-ring-color': primaryColor } as any} />
                   {cepLoading && <div className="absolute right-3 top-3.5 w-4 h-4 border-2 border-amber-300 border-t-amber-500 rounded-full animate-spin" />}
                   {errors.cep && <p className="text-xs text-red-500 mt-1 ml-1">{errors.cep}</p>}
@@ -319,7 +319,7 @@ function LoginGate({ onBrowse }: { onBrowse: () => void }) {
                     <MapPin size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input placeholder="Rua / Avenida *" value={reg.street}
                       onChange={e => setReg(r => ({ ...r, street: e.target.value }))}
-                      className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 ${errors.street ? 'border-red-400' : 'border-gray-200'}`}
+                      className={`w-full pl-10 pr-4 py-3.5 rounded-xl border text-base focus:outline-none focus:ring-2 ${errors.street ? 'border-red-400' : 'border-gray-200'}`}
                       style={{ '--tw-ring-color': primaryColor } as any} />
                   </div>
                   {errors.street && <p className="text-xs text-red-500 mt-1 ml-1">{errors.street}</p>}
@@ -329,13 +329,13 @@ function LoginGate({ onBrowse }: { onBrowse: () => void }) {
                   <div>
                     <input placeholder="Número *" value={reg.number}
                       onChange={e => setReg(r => ({ ...r, number: e.target.value }))}
-                      className={`w-full px-3 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 ${errors.number ? 'border-red-400' : 'border-gray-200'}`}
+                      className={`w-full px-3 py-3.5 rounded-xl border text-base focus:outline-none focus:ring-2 ${errors.number ? 'border-red-400' : 'border-gray-200'}`}
                       style={{ '--tw-ring-color': primaryColor } as any} />
                     {errors.number && <p className="text-xs text-red-500 mt-1">{errors.number}</p>}
                   </div>
                   <input placeholder="Complemento" value={reg.complement}
                     onChange={e => setReg(r => ({ ...r, complement: e.target.value }))}
-                    className="w-full px-3 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2"
+                    className="w-full px-3 py-3.5 rounded-xl border border-gray-200 text-base focus:outline-none focus:ring-2"
                     style={{ '--tw-ring-color': primaryColor } as any} />
                 </div>
 
@@ -344,7 +344,7 @@ function LoginGate({ onBrowse }: { onBrowse: () => void }) {
                     <MapPin size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input placeholder="Bairro *" value={reg.neighborhood}
                       onChange={e => setReg(r => ({ ...r, neighborhood: e.target.value }))}
-                      className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 ${errors.neighborhood ? 'border-red-400' : 'border-gray-200'}`}
+                      className={`w-full pl-10 pr-4 py-3.5 rounded-xl border text-base focus:outline-none focus:ring-2 ${errors.neighborhood ? 'border-red-400' : 'border-gray-200'}`}
                       style={{ '--tw-ring-color': primaryColor } as any} />
                   </div>
                   {errors.neighborhood && <p className="text-xs text-red-500 mt-1 ml-1">{errors.neighborhood}</p>}
@@ -354,18 +354,18 @@ function LoginGate({ onBrowse }: { onBrowse: () => void }) {
                   <div className="col-span-2">
                     <input placeholder="Cidade *" value={reg.city}
                       onChange={e => setReg(r => ({ ...r, city: e.target.value }))}
-                      className={`w-full px-3 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 ${errors.city ? 'border-red-400' : 'border-gray-200'}`}
+                      className={`w-full px-3 py-3.5 rounded-xl border text-base focus:outline-none focus:ring-2 ${errors.city ? 'border-red-400' : 'border-gray-200'}`}
                       style={{ '--tw-ring-color': primaryColor } as any} />
                     {errors.city && <p className="text-xs text-red-500 mt-1">{errors.city}</p>}
                   </div>
                   <input placeholder="UF" value={reg.state} maxLength={2}
                     onChange={e => setReg(r => ({ ...r, state: e.target.value.toUpperCase() }))}
-                    className="w-full px-3 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 text-center"
+                    className="w-full px-3 py-3.5 rounded-xl border border-gray-200 text-base focus:outline-none focus:ring-2 text-center"
                     style={{ '--tw-ring-color': primaryColor } as any} />
                 </div>
 
                 <button onClick={handleRegister} disabled={busy}
-                  className="w-full text-white font-bold py-3 rounded-2xl transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg mt-1"
+                  className="w-full text-white font-bold py-4 rounded-2xl transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg text-base mt-1"
                   style={{ backgroundColor: primaryColor }}>
                   {busy
                     ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -379,7 +379,7 @@ function LoginGate({ onBrowse }: { onBrowse: () => void }) {
         {/* Browse without login */}
         <button
           onClick={onBrowse}
-          className="text-white/80 hover:text-white text-sm transition py-2 underline underline-offset-4 drop-shadow"
+          className="text-white/80 hover:text-white text-base transition py-3 underline underline-offset-4 drop-shadow"
         >
           Ver cardápio sem fazer login →
         </button>
