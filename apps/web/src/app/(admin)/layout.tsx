@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { useRouter, usePathname } from 'next/navigation'
 import {
-  LayoutDashboard, Package, Tag, ClipboardList, BarChart3, LogOut, Menu, X, Settings, Users, AlertTriangle, Clock, Ticket,
+  LayoutDashboard, Package, Tag, ClipboardList, BarChart3, LogOut, Menu, X, Settings, Users, AlertTriangle, Clock, Ticket, Wallet,
 } from 'lucide-react'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
@@ -21,6 +21,7 @@ const navItems: NavItem[] = [
   { href: '/admin/categories', label: 'Categorias', icon: Tag, adminOnly: true },
   { href: '/admin/coupons', label: 'Cupons', icon: Ticket, adminOnly: true },
   { href: '/admin/reports', label: 'Relatórios', icon: BarChart3, adminOnly: true },
+  { href: '/admin/financeiro', label: 'Financeiro', icon: Wallet, adminOnly: true },
   { href: '/admin/settings', label: 'Configurações', icon: Settings, adminOnly: true },
   { href: '/admin/admins', label: 'Admins', icon: Users, superadminOnly: true },
 ]

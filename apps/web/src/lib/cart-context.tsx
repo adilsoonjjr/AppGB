@@ -1,22 +1,40 @@
 'use client'
 
 import { createContext, useContext, useReducer, ReactNode } from 'react'
-import type { CartItem, Product } from '@/types'
+import type { CartItem, Product, SelectedOption } from '@/types'
+
+function cartKey(productId: string, selectedOptions?: SelectedOption[]): string {
+  if (!selectedOptions || selectedOptions.length === 0) return productId
+  const optStr = selectedOptions
+    .map(o => `${o.optionId}:${o.items.map(i => i.id).sort().join(',')}`)
+    .sort()
+    .join('|')
+  return `${productId}__${optStr}`
+}
+
+function optionsExtra(selectedOptions?: SelectedOption[]): number {
+  if (!selectedOptions) return 0
+  return selectedOptions.reduce(
+    (sum, o) => sum + o.items.reduce((s, i) => s + i.priceModifier, 0),
+    0
+  )
+}
 
 interface CartState {
-  items: CartItem[]
+  items: (CartItem & { key: string })[]
 }
 
 type CartAction =
-  | { type: 'ADD'; product: Product; quantity: number; observations?: string }
-  | { type: 'REMOVE'; productId: string }
-  | { type: 'UPDATE_QTY'; productId: string; quantity: number }
+  | { type: 'ADD'; product: Product; quantity: number; observations?: string; selectedOptions?: SelectedOption[] }
+  | { type: 'REMOVE'; key: string }
+  | { type: 'UPDATE_QTY'; key: string; quantity: number }
   | { type: 'CLEAR' }
 
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case 'ADD': {
-      const existing = state.items.findIndex(i => i.product.id === action.product.id)
+      const key = cartKey(action.product.id, action.selectedOptions)
+      const existing = state.items.findIndex(i => i.key === key)
       if (existing >= 0) {
         const items = [...state.items]
         items[existing] = {
@@ -29,19 +47,25 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       return {
         items: [
           ...state.items,
-          { product: action.product, quantity: action.quantity, observations: action.observations },
+          {
+            key,
+            product: action.product,
+            quantity: action.quantity,
+            observations: action.observations,
+            selectedOptions: action.selectedOptions,
+          },
         ],
       }
     }
     case 'REMOVE':
-      return { items: state.items.filter(i => i.product.id !== action.productId) }
+      return { items: state.items.filter(i => i.key !== action.key) }
     case 'UPDATE_QTY': {
       if (action.quantity <= 0) {
-        return { items: state.items.filter(i => i.product.id !== action.productId) }
+        return { items: state.items.filter(i => i.key !== action.key) }
       }
       return {
         items: state.items.map(i =>
-          i.product.id === action.productId ? { ...i, quantity: action.quantity } : i
+          i.key === action.key ? { ...i, quantity: action.quantity } : i
         ),
       }
     }
@@ -53,12 +77,12 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 }
 
 interface CartContextType {
-  items: CartItem[]
+  items: (CartItem & { key: string })[]
   total: number
   itemCount: number
-  addItem: (product: Product, quantity: number, observations?: string) => void
-  removeItem: (productId: string) => void
-  updateQuantity: (productId: string, quantity: number) => void
+  addItem: (product: Product, quantity: number, observations?: string, selectedOptions?: SelectedOption[]) => void
+  removeItem: (key: string) => void
+  updateQuantity: (key: string, quantity: number) => void
   clearCart: () => void
 }
 
@@ -76,8 +100,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, { items: [] })
 
   const total = state.items.reduce((sum, i) => {
-    const price = i.product.isPromotion && i.product.promotionalPrice ? i.product.promotionalPrice : i.product.price
-    return sum + price * i.quantity
+    const base = i.product.isPromotion && i.product.promotionalPrice ? i.product.promotionalPrice : i.product.price
+    const extra = optionsExtra(i.selectedOptions)
+    return sum + (base + extra) * i.quantity
   }, 0)
   const itemCount = state.items.reduce((sum, i) => sum + i.quantity, 0)
 
@@ -87,9 +112,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         items: state.items,
         total,
         itemCount,
-        addItem: (p, q, obs) => dispatch({ type: 'ADD', product: p, quantity: q, observations: obs }),
-        removeItem: id => dispatch({ type: 'REMOVE', productId: id }),
-        updateQuantity: (id, q) => dispatch({ type: 'UPDATE_QTY', productId: id, quantity: q }),
+        addItem: (p, q, obs, opts) => dispatch({ type: 'ADD', product: p, quantity: q, observations: obs, selectedOptions: opts }),
+        removeItem: key => dispatch({ type: 'REMOVE', key }),
+        updateQuantity: (key, q) => dispatch({ type: 'UPDATE_QTY', key, quantity: q }),
         clearCart: () => dispatch({ type: 'CLEAR' }),
       }}
     >

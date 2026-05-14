@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Search, User, LogOut, LogIn, ClipboardList, MessageCircle, Star, Flame, X } from 'lucide-react'
+import { Search, User, LogOut, LogIn, ClipboardList, MessageCircle, Star, Flame, X, Heart } from 'lucide-react'
 import { getCategories, getProducts, getRestaurant } from '@/lib/db'
 import type { Category, Product, Restaurant } from '@/types'
 import ProductCard from '@/components/customer/ProductCard'
 import CartButton from '@/components/customer/CartButton'
-import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import { MenuSkeleton } from '@/components/ui/Skeleton'
 import { useAuth } from '@/lib/auth-context'
+import { useFavorites } from '@/lib/favorites-context'
 import { useCart } from '@/lib/cart-context'
 import { useRouter } from 'next/navigation'
 import { formatCurrency } from '@/lib/utils'
@@ -18,16 +19,23 @@ const RESTAURANT_ID = process.env.NEXT_PUBLIC_RESTAURANT_ID || 'default'
 export default function MenuPage() {
   const { user, appUser, logout } = useAuth()
   const { addItem } = useCart()
+  const { favoriteIds } = useFavorites()
   const router = useRouter()
   const [categories, setCategories] = useState<Category[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null)
+  const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [showDailyPopup, setShowDailyPopup] = useState(false)
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({})
+
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchInput), 250)
+    return () => clearTimeout(t)
+  }, [searchInput])
 
   const restaurantName = restaurant?.name || process.env.NEXT_PUBLIC_RESTAURANT_NAME || 'Galpão Baiano'
   const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || restaurant?.whatsappNumber || ''
@@ -68,13 +76,21 @@ export default function MenuPage() {
 
   const featuredProducts = products.filter(p => p.isFeatured && p.available)
   const promoProducts = products.filter(p => p.isPromotion && p.available)
+  const favoriteProducts = products.filter(p => favoriteIds.includes(p.id) && p.available)
 
   const scrollToCategory = (catId: string) => {
     setActiveCategory(catId)
     sectionRefs.current[catId]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
-  if (loading) return <LoadingSpinner className="min-h-screen" />
+  if (loading) return (
+    <div className="min-h-dvh bg-gray-50">
+      <div className="bg-white h-14 shadow-sm" />
+      <div className="max-w-2xl mx-auto px-4 py-4">
+        <MenuSkeleton />
+      </div>
+    </div>
+  )
 
   const dailySpecial = restaurant?.dailySpecial
   const isOpen = restaurant?.isOpen !== false
@@ -112,7 +128,7 @@ export default function MenuPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-28">
+    <div className="min-h-dvh bg-gray-50 pb-safe-32">
       {/* Prato do Dia Popup */}
       {showDailyPopup && dailySpecial?.active && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
@@ -230,8 +246,8 @@ export default function MenuPage() {
             <input
               type="text"
               placeholder="Buscar no cardápio..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
+              value={searchInput}
+              onChange={e => setSearchInput(e.target.value)}
               className="w-full pl-9 pr-4 py-2.5 bg-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 transition"
             />
           </div>
@@ -273,6 +289,20 @@ export default function MenuPage() {
           )
         ) : (
           <>
+            {/* Favoritos */}
+            {favoriteProducts.length > 0 && (
+              <section>
+                <h2 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+                  <Heart size={18} className="text-red-500 fill-red-500" />
+                  Meus Favoritos
+                  <span className="text-sm font-normal text-gray-400">({favoriteProducts.length})</span>
+                </h2>
+                <div className="grid gap-3">
+                  {favoriteProducts.map(p => <ProductCard key={p.id} product={p} />)}
+                </div>
+              </section>
+            )}
+
             {/* Promoções */}
             {promoProducts.length > 0 && (
               <section>

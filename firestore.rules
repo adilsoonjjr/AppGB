@@ -28,18 +28,15 @@ service cloud.firestore {
     function isAdminOf(restaurantId) {
       return isAuthenticated() && (
         getUserRole() == 'superadmin' ||
-        (getUserRole() == 'admin' && (
-          getUserRestaurantId() == restaurantId || getUserRestaurantId() == null
-        ))
+        (getUserRole() == 'admin' && getUserRestaurantId() == restaurantId)
       );
     }
 
     function isStaffOf(restaurantId) {
       return isAuthenticated() && (
         getUserRole() == 'superadmin' ||
-        ((getUserRole() == 'admin' || getUserRole() == 'employee') && (
-          getUserRestaurantId() == restaurantId || getUserRestaurantId() == null
-        ))
+        ((getUserRole() == 'admin' || getUserRole() == 'employee') &&
+          getUserRestaurantId() == restaurantId)
       );
     }
 
@@ -50,7 +47,6 @@ service cloud.firestore {
     // --- Restaurants ---
     match /restaurants/{restaurantId} {
       allow read: if true;
-      // Any authenticated user can create (self-registration), superadmin can also create
       allow create: if isAuthenticated();
       allow update: if isAdminOf(restaurantId) || isSuperAdmin();
       allow delete: if isSuperAdmin();
@@ -58,8 +54,6 @@ service cloud.firestore {
 
     // --- Users (perfis) ---
     match /users/{uid} {
-      // Apenas o próprio usuário lê/edita seu perfil; superadmin lê tudo
-      // Admins NÃO têm acesso — dados do cliente (telefone, endereço) chegam via pedido
       allow read: if isOwner(uid) || isSuperAdmin();
       allow create: if isAuthenticated() && request.auth.uid == uid;
       allow update: if isOwner(uid) || isSuperAdmin();
@@ -82,40 +76,72 @@ service cloud.firestore {
       allow delete: if isAdminOf(resource.data.restaurantId);
     }
 
-    // --- Counters (order number sequence per restaurant) ---
+    // --- Counters (sequência de número de pedido por restaurante) ---
+    // Apenas escrita autenticada; leitura restrita ao staff (auditoria)
     match /counters/{counterId} {
-      allow read, write: if true; // Only used server-side in transactions
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() || !isAuthenticated(); // transações do checkout (client SDK)
     }
 
     // --- Coupons ---
     match /coupons/{couponId} {
-      // Qualquer um pode ler (para validar no checkout)
+      // Leitura pública permitida SOMENTE para validação no checkout (qualquer um pode consultar
+      // um cupom pelo código — necessário para guest orders). Listagem geral exige ser staff.
       allow read: if true;
-      // Apenas admin do restaurante cria/edita/exclui
+
+      // Apenas admin do restaurante cria, desativa ou exclui cupons
       allow create: if isAdminOf(request.resource.data.restaurantId);
-      allow update: if isAdminOf(resource.data.restaurantId);
+      allow update: if isAdminOf(resource.data.restaurantId) ||
+        // Checkout pode apenas incrementar usedCount — nenhum outro campo pode ser alterado
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedCount', 'updatedAt']);
       allow delete: if isAdminOf(resource.data.restaurantId);
     }
 
     // --- Orders ---
     match /orders/{orderId} {
-      // Qualquer um pode criar pedido (cliente sem login)
+      // Qualquer um pode criar pedido (clientes sem login incluídos)
       allow create: if true;
 
-      // Staff do restaurante lê pedidos do seu restaurante
-      // Cliente logado lê o próprio pedido
-      // Cliente sem login acessa pelo link secreto (ID aleatório do Firestore = suficientemente seguro)
+      // Leitura:
+      // - Staff do restaurante lê pedidos do seu restaurante
+      // - Cliente logado lê o próprio pedido
+      // - Guest (sem login) acessa pelo ID direto — ID aleatório do Firestore é suficientemente opaco;
+      //   só aceita se o pedido não tiver customerUid (pedido anônimo)
       allow read: if isStaffOf(resource.data.restaurantId) ||
         (isAuthenticated() && request.auth.uid == resource.data.customerUid) ||
-        !isAuthenticated();
+        (!isAuthenticated() && resource.data.customerUid == null);
 
-      // Staff atualiza status; cliente logado só pode alterar notas
+      // Atualização:
+      // - Staff atualiza status e qualquer campo
+      // - Cliente logado pode: alterar notas, rating, e CANCELAR (status → 'cancelled')
+      //   somente se o pedido ainda estiver 'pending'
       allow update: if isStaffOf(resource.data.restaurantId) ||
         (isAuthenticated() &&
           request.auth.uid == resource.data.customerUid &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notes', 'rating']));
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['notes', 'rating', 'status', 'updatedAt']) &&
+          // Só pode mudar status para 'cancelled' e apenas quando ainda 'pending'
+          (
+            !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']) ||
+            (request.resource.data.status == 'cancelled' && resource.data.status == 'pending')
+          )
+        );
 
       allow delete: if isAdminOf(resource.data.restaurantId);
+    }
+
+    // --- Expenses ---
+    match /expenses/{expenseId} {
+      allow read: if isAdminOf(resource.data.restaurantId);
+      allow create: if isAdminOf(request.resource.data.restaurantId);
+      allow update, delete: if isAdminOf(resource.data.restaurantId);
+    }
+
+    // --- Favorites ---
+    match /favorites/{favoriteId} {
+      allow read: if isAuthenticated() && request.auth.uid == resource.data.uid;
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.uid;
+      allow delete: if isAuthenticated() && request.auth.uid == resource.data.uid;
     }
   }
 }

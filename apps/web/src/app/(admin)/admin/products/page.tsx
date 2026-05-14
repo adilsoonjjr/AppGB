@@ -13,6 +13,7 @@ import Input from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal'
 import toast from 'react-hot-toast'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import AdminOnly from '@/components/admin/AdminOnly'
 
 const emptyForm = {
   name: '', description: '', price: '', categoryId: '',
@@ -20,7 +21,7 @@ const emptyForm = {
   isPromotion: false, promotionalPrice: '', promotionLabel: '', isFeatured: false,
 }
 
-export default function ProductsPage() {
+function ProductsPageInner() {
   const { appUser } = useAuth()
   const restaurantId = appUser?.restaurantId || process.env.NEXT_PUBLIC_RESTAURANT_ID || 'default'
 
@@ -308,4 +309,8 @@ export default function ProductsPage() {
       </Modal>
     </div>
   )
+}
+
+export default function ProductsPage() {
+  return <AdminOnly><ProductsPageInner /></AdminOnly>
 }

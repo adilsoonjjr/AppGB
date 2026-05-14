@@ -34,6 +34,31 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Safe area insets para iPhone notch/home bar */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .pb-safe-4 {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
+  }
+  .pb-safe-6 {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1.5rem);
+  }
+  .pb-safe-28 {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 7rem);
+  }
+  .pb-safe-32 {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8rem);
+  }
+  .bottom-safe-6 {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 1.5rem);
+  }
+
+  /* Dynamic viewport height — corrige o bug de 100vh no iOS Safari */
+  .min-h-dvh {
+    min-height: 100dvh;
+  }
 }
 
 @keyframes slide-in-from-bottom-4 {

@@ -24,7 +24,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-32">
+    <div className="min-h-dvh bg-gray-50 pb-safe-32">
       <div className="bg-white sticky top-0 z-10 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
           <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-xl transition">
@@ -35,51 +35,62 @@ export default function CartPage() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
-        {items.map(item => (
-          <div key={item.product.id} className="bg-white rounded-2xl p-4 flex gap-3 shadow-sm border border-gray-100">
-            {item.product.imageUrl && (
-              <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden">
-                <Image src={item.product.imageUrl} alt={item.product.name} fill className="object-cover" sizes="64px" />
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-sm text-gray-900 truncate">{item.product.name}</h3>
-              {item.observations && (
-                <p className="text-xs text-gray-400 mt-0.5 italic">"{item.observations}"</p>
-              )}
-              <p className="text-amber-600 font-bold mt-1">{formatCurrency(item.product.price)}</p>
-              <div className="flex items-center justify-between mt-2">
-                <div className="flex items-center gap-2 bg-gray-100 rounded-xl p-0.5">
-                  <button
-                    onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white transition"
-                  >
-                    <Minus size={13} />
-                  </button>
-                  <span className="w-6 text-center font-bold text-sm">{item.quantity}</span>
-                  <button
-                    onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white transition"
-                  >
-                    <Plus size={13} />
-                  </button>
+        {items.map(item => {
+          const optionsExtra = item.selectedOptions?.reduce(
+            (s, o) => s + o.items.reduce((ss, i) => ss + i.priceModifier, 0), 0
+          ) ?? 0
+          const unitPrice = (item.product.isPromotion && item.product.promotionalPrice ? item.product.promotionalPrice : item.product.price) + optionsExtra
+          return (
+            <div key={item.key} className="bg-white rounded-2xl p-4 flex gap-3 shadow-sm border border-gray-100">
+              {item.product.imageUrl && (
+                <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden">
+                  <Image src={item.product.imageUrl} alt={item.product.name} fill className="object-cover" sizes="64px" />
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-bold text-sm">{formatCurrency(item.product.price * item.quantity)}</span>
-                  <button
-                    onClick={() => removeItem(item.product.id)}
-                    className="text-red-400 hover:text-red-600 p-1"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+              )}
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-sm text-gray-900 truncate">{item.product.name}</h3>
+                {item.selectedOptions && item.selectedOptions.length > 0 && (
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {item.selectedOptions.flatMap(o => o.items.map(i => i.name)).join(', ')}
+                  </p>
+                )}
+                {item.observations && (
+                  <p className="text-xs text-gray-400 mt-0.5 italic">"{item.observations}"</p>
+                )}
+                <p className="text-amber-600 font-bold mt-1">{formatCurrency(unitPrice)}</p>
+                <div className="flex items-center justify-between mt-2">
+                  <div className="flex items-center gap-2 bg-gray-100 rounded-xl p-0.5">
+                    <button
+                      onClick={() => updateQuantity(item.key, item.quantity - 1)}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white transition"
+                    >
+                      <Minus size={13} />
+                    </button>
+                    <span className="w-6 text-center font-bold text-sm">{item.quantity}</span>
+                    <button
+                      onClick={() => updateQuantity(item.key, item.quantity + 1)}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white transition"
+                    >
+                      <Plus size={13} />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="font-bold text-sm">{formatCurrency(unitPrice * item.quantity)}</span>
+                    <button
+                      onClick={() => removeItem(item.key)}
+                      className="text-red-400 hover:text-red-600 p-1"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-lg">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 pt-4 pb-safe-4 shadow-lg">
         <div className="max-w-2xl mx-auto space-y-3">
           <div className="flex justify-between text-sm text-gray-500">
             <span>Subtotal ({items.reduce((s, i) => s + i.quantity, 0)} itens)</span>

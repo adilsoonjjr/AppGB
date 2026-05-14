@@ -28,6 +28,18 @@ export default function CouponsPage() {
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
 
+  const isAdmin = appUser?.role === 'admin' || appUser?.role === 'superadmin'
+
+  if (appUser && !isAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center text-gray-400">
+        <Tag size={40} className="mb-3 opacity-30" />
+        <p className="font-semibold text-gray-600">Acesso restrito</p>
+        <p className="text-sm mt-1">Apenas administradores podem gerenciar cupons.</p>
+      </div>
+    )
+  }
+
   const load = async () => {
     if (!restaurantId) return
     setLoading(true)

@@ -4,12 +4,13 @@ import {
   ScrollView, ActivityIndicator, StatusBar, RefreshControl, ImageBackground,
 } from 'react-native'
 import { Image } from 'expo-image'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { collection, getDocs, query, where, orderBy, doc, getDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { useCartStore } from '@/store/cart'
-import { Search, Flame, Star } from 'lucide-react-native'
+import { useFavoritesStore } from '@/store/favorites'
+import { Search, Flame, Star, Heart } from 'lucide-react-native'
 
 const RESTAURANT_ID = process.env.EXPO_PUBLIC_RESTAURANT_ID || 'default'
 const AMBER = '#d97706'
@@ -33,11 +34,14 @@ export default function MenuScreen() {
   const [products, setProducts] = useState<Product[]>([])
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const itemCount = useCartStore(s => s.itemCount())
   const total = useCartStore(s => s.total())
+  const insets = useSafeAreaInsets()
+  const { load: loadFavorites, ids: favoriteIds } = useFavoritesStore()
 
   const load = async () => {
     const [catSnap, prodSnap, restSnap] = await Promise.all([
@@ -55,7 +59,12 @@ export default function MenuScreen() {
     setRefreshing(false)
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load(); loadFavorites() }, [])
+
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchInput), 250)
+    return () => clearTimeout(t)
+  }, [searchInput])
 
   const filteredProducts = products.filter(p => {
     if (search) return p.name.toLowerCase().includes(search.toLowerCase()) || p.description?.toLowerCase().includes(search.toLowerCase())
@@ -70,8 +79,25 @@ export default function MenuScreen() {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={AMBER} />
+      <View style={styles.container}>
+        <SafeAreaView edges={['top']} style={styles.plainHeader}>
+          <View style={[styles.plainHeaderRow, { paddingVertical: 14 }]}>
+            <View style={{ flex: 1, height: 20, backgroundColor: '#e5e7eb', borderRadius: 8 }} />
+          </View>
+        </SafeAreaView>
+        <View style={{ padding: 16, gap: 12 }}>
+          {[1, 2, 3, 4].map(i => (
+            <View key={i} style={styles.skeletonCard}>
+              <View style={{ flex: 1, padding: 14, gap: 8 }}>
+                <View style={{ height: 14, width: '70%', backgroundColor: '#e5e7eb', borderRadius: 6 }} />
+                <View style={{ height: 11, width: '90%', backgroundColor: '#f3f4f6', borderRadius: 6 }} />
+                <View style={{ height: 11, width: '60%', backgroundColor: '#f3f4f6', borderRadius: 6 }} />
+                <View style={{ height: 16, width: '35%', backgroundColor: '#e5e7eb', borderRadius: 6, marginTop: 6 }} />
+              </View>
+              <View style={{ width: 110, height: 110, backgroundColor: '#e5e7eb' }} />
+            </View>
+          ))}
+        </View>
       </View>
     )
   }
@@ -122,8 +148,8 @@ export default function MenuScreen() {
             style={styles.searchInput}
             placeholder="Buscar no cardápio..."
             placeholderTextColor="#9ca3af"
-            value={search}
-            onChangeText={setSearch}
+            value={searchInput}
+            onChangeText={setSearchInput}
           />
         </View>
         {!search && (
@@ -148,7 +174,7 @@ export default function MenuScreen() {
       <FlatList
         data={search ? filteredProducts : undefined}
         keyExtractor={i => i.id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 120 }]}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load() }} tintColor={AMBER} />}
         ListHeaderComponent={
@@ -175,6 +201,22 @@ export default function MenuScreen() {
                   </View>
                 </View>
               )}
+
+              {/* Favoritos */}
+              {favoriteIds.length > 0 && (() => {
+                const favs = products.filter(p => favoriteIds.includes(p.id) && p.available)
+                if (favs.length === 0) return null
+                return (
+                  <View style={{ marginBottom: 16 }}>
+                    <View style={styles.sectionHeader}>
+                      <Heart size={18} color="#ef4444" fill="#ef4444" />
+                      <Text style={styles.sectionTitle}>Meus Favoritos</Text>
+                      <Text style={styles.sectionCount}>({favs.length})</Text>
+                    </View>
+                    {favs.map(p => <ProductCard key={p.id} product={p} />)}
+                  </View>
+                )
+              })()}
 
               {/* Promoções */}
               {promoProducts.length > 0 && (
@@ -217,7 +259,7 @@ export default function MenuScreen() {
 
       {/* Cart Button */}
       {itemCount > 0 && (
-        <TouchableOpacity style={styles.cartBtn} onPress={() => router.push('/cart')} activeOpacity={0.9}>
+        <TouchableOpacity style={[styles.cartBtn, { bottom: insets.bottom + 16 }]} onPress={() => router.push('/cart')} activeOpacity={0.9}>
           <View style={styles.cartLeft}>
             <View style={styles.cartBadge}>
               <Text style={styles.cartBadgeText}>{itemCount}</Text>
@@ -233,6 +275,8 @@ export default function MenuScreen() {
 
 function ProductCard({ product }: { product: Product }) {
   const displayPrice = product.isPromotion && product.promotionalPrice ? product.promotionalPrice : product.price
+  const { isFavorite, toggle } = useFavoritesStore()
+  const fav = isFavorite(product.id)
 
   return (
     <TouchableOpacity
@@ -261,13 +305,22 @@ function ProductCard({ product }: { product: Product }) {
           ) : null}
         </View>
       </View>
-      {product.imageUrl ? (
-        <Image source={{ uri: product.imageUrl }} style={styles.productImage} contentFit="cover" />
-      ) : (
-        <View style={[styles.productImage, styles.imagePlaceholder]}>
-          <Text style={{ fontSize: 28 }}>🍽️</Text>
-        </View>
-      )}
+      <View style={{ position: 'relative' }}>
+        {product.imageUrl ? (
+          <Image source={{ uri: product.imageUrl }} style={styles.productImage} contentFit="cover" />
+        ) : (
+          <View style={[styles.productImage, styles.imagePlaceholder]}>
+            <Text style={{ fontSize: 28 }}>🍽️</Text>
+          </View>
+        )}
+        <TouchableOpacity
+          style={styles.heartBtn}
+          onPress={e => { e.stopPropagation?.(); toggle(product.id) }}
+          hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+        >
+          <Heart size={14} color={fav ? '#ef4444' : '#9ca3af'} fill={fav ? '#ef4444' : 'transparent'} />
+        </TouchableOpacity>
+      </View>
     </TouchableOpacity>
   )
 }
@@ -316,6 +369,7 @@ const styles = StyleSheet.create({
   dailyPrice: { color: 'white', fontSize: 20, fontWeight: '800' },
 
   card: { backgroundColor: 'white', borderRadius: 16, flexDirection: 'row', overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, elevation: 2, marginBottom: 12 },
+  skeletonCard: { backgroundColor: 'white', borderRadius: 16, flexDirection: 'row', overflow: 'hidden', marginBottom: 12, height: 110 },
   cardContent: { flex: 1, padding: 14, justifyContent: 'space-between' },
   productName: { fontSize: 14, fontWeight: '700', color: '#111827', marginBottom: 4 },
   productDesc: { fontSize: 12, color: '#6b7280', lineHeight: 16, marginBottom: 8 },
@@ -326,6 +380,7 @@ const styles = StyleSheet.create({
   prepTime: { fontSize: 11, color: '#9ca3af' },
   productImage: { width: 110, height: 110 },
   imagePlaceholder: { backgroundColor: '#f3f4f6', alignItems: 'center', justifyContent: 'center' },
+  heartBtn: { position: 'absolute', top: 6, right: 6, width: 26, height: 26, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   empty: { alignItems: 'center', paddingVertical: 60 },
   emptyText: { color: '#9ca3af', fontSize: 15 },
 

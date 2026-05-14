@@ -17,7 +17,7 @@ import {
 } from 'firebase/firestore'
 import { db } from './firebase'
 import type {
-  Category, Product, Order, OrderStatus, AppUser, Restaurant, DeliveryZone, Coupon, OrderRating,
+  Category, Product, Order, OrderStatus, AppUser, Restaurant, DeliveryZone, Coupon, OrderRating, Expense,
 } from '@/types'
 
 const RESTAURANT_ID = process.env.NEXT_PUBLIC_RESTAURANT_ID || 'default'
@@ -296,4 +296,62 @@ export async function updateOrderEstimatedTime(id: string, minutes: number): Pro
     estimatedTime: minutes,
     updatedAt: new Date().toISOString(),
   })
+}
+
+export async function cancelOrder(id: string): Promise<void> {
+  await updateDoc(doc(db, 'orders', id), {
+    status: 'cancelled',
+    updatedAt: new Date().toISOString(),
+  })
+}
+
+// --- Favorites ---
+export async function getFavoriteIds(uid: string, restaurantId: string = RESTAURANT_ID): Promise<string[]> {
+  const q = query(
+    collection(db, 'favorites'),
+    where('uid', '==', uid),
+    where('restaurantId', '==', restaurantId)
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map(d => d.data().productId as string)
+}
+
+export async function addFavorite(uid: string, productId: string, restaurantId: string = RESTAURANT_ID): Promise<void> {
+  const id = `${uid}_${productId}`
+  await setDoc(doc(db, 'favorites', id), {
+    uid,
+    productId,
+    restaurantId,
+    createdAt: new Date().toISOString(),
+  })
+}
+
+export async function removeFavorite(uid: string, productId: string): Promise<void> {
+  await deleteDoc(doc(db, 'favorites', `${uid}_${productId}`))
+}
+
+// --- Expenses ---
+export async function getExpenses(restaurantId: string, month?: string): Promise<Expense[]> {
+  const constraints: QueryConstraint[] = [
+    where('restaurantId', '==', restaurantId),
+    orderBy('date', 'desc'),
+  ]
+  if (month) constraints.push(where('month', '==', month))
+  const q = query(collection(db, 'expenses'), ...constraints)
+  const snap = await getDocs(q)
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as Expense))
+}
+
+export async function createExpense(data: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+  const now = new Date().toISOString()
+  const ref = await addDoc(collection(db, 'expenses'), { ...data, createdAt: now, updatedAt: now })
+  return ref.id
+}
+
+export async function updateExpense(id: string, data: Partial<Expense>): Promise<void> {
+  await updateDoc(doc(db, 'expenses', id), { ...data, updatedAt: new Date().toISOString() })
+}
+
+export async function deleteExpense(id: string): Promise<void> {
+  await deleteDoc(doc(db, 'expenses', id))
 }

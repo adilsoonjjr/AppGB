@@ -6,6 +6,7 @@ import { ptBR } from 'date-fns/locale'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts'
 import { getOrdersByDateRange } from '@/lib/db'
 import { useAuth } from '@/lib/auth-context'
+import AdminOnly from '@/components/admin/AdminOnly'
 import type { Order } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 import { TrendingUp, ShoppingBag, Users, Star } from 'lucide-react'
@@ -13,7 +14,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 type Period = '7d' | '30d' | '90d'
 
-export default function ReportsPage() {
+function ReportsPageInner() {
   const { appUser } = useAuth()
   const restaurantId = appUser?.restaurantId || process.env.NEXT_PUBLIC_RESTAURANT_ID || 'default'
   const [period, setPeriod] = useState<Period>('7d')
@@ -211,4 +212,8 @@ export default function ReportsPage() {
       </div>
     </div>
   )
+}
+
+export default function ReportsPage() {
+  return <AdminOnly><ReportsPageInner /></AdminOnly>
 }
