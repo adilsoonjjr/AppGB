@@ -28,13 +28,18 @@ export const viewport: Viewport = {
   themeColor: '#D97706',
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
+  minimumScale: 1,
+  maximumScale: 5,
+  userScalable: true,
   viewportFit: 'cover',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, viewport-fit=cover" />
+      </head>
       <body className={inter.className}>
         <AuthProvider>
           <CartProvider>
