@@ -43,9 +43,15 @@ export default function CouponsPage() {
   const load = async () => {
     if (!restaurantId) return
     setLoading(true)
-    const data = await getCoupons(restaurantId)
-    setCoupons(data)
-    setLoading(false)
+    try {
+      const data = await getCoupons(restaurantId)
+      setCoupons(data)
+    } catch (err) {
+      console.error('Coupons load error:', err)
+      toast.error('Erro ao carregar cupons')
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
