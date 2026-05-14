@@ -44,7 +44,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           </div>
         )}
 
-        <div className="flex-1 p-4 flex flex-col justify-between">
+        <div className="flex-1 p-3 sm:p-4 flex flex-col justify-between">
           <div>
             <h3 className={`font-semibold text-gray-900 text-sm leading-snug mb-1 ${product.isPromotion ? 'mt-5' : ''}`}>
               {product.name}
@@ -76,15 +76,15 @@ export default function ProductCard({ product }: ProductCardProps) {
             </div>
             <button
               onClick={e => { e.stopPropagation(); setModalOpen(true) }}
-              className="w-8 h-8 bg-amber-500 text-white rounded-full flex items-center justify-center hover:bg-amber-600 transition shadow-sm"
+              className="w-10 h-10 bg-amber-500 text-white rounded-full flex items-center justify-center hover:bg-amber-600 transition shadow-sm active:scale-95"
             >
-              <Plus size={16} />
+              <Plus size={18} />
             </button>
           </div>
         </div>
 
         {product.imageUrl && (
-          <div className="relative w-32 h-32 flex-shrink-0">
+          <div className="relative w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0">
             <Image src={product.imageUrl} alt={product.name} fill className="object-cover" sizes="128px" />
             {user && (
               <button

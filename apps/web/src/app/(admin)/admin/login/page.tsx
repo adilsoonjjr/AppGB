@@ -61,7 +61,7 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-5">
+    <div className="min-h-dvh bg-gray-950 flex flex-col items-center justify-center px-5 py-8">
       <div className="w-full max-w-sm">
 
         {/* Brand */}
@@ -91,7 +91,7 @@ export default function AdminLoginPage() {
           </div>
 
           {/* Form */}
-          <div className="px-6 py-5 space-y-3">
+          <div className="px-6 py-5 space-y-4">
             <div className="relative">
               <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
@@ -129,7 +129,7 @@ export default function AdminLoginPage() {
             <button
               onClick={mode === 'login' ? handleLogin : handleReset}
               disabled={busy}
-              className="w-full bg-gray-900 hover:bg-gray-800 active:bg-black text-white font-bold py-3 rounded-2xl transition disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full bg-gray-900 hover:bg-gray-800 active:bg-black text-white font-bold py-4 rounded-2xl transition disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {busy
                 ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />

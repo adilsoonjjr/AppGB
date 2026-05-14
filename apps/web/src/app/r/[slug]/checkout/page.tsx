@@ -286,11 +286,9 @@ export default function SlugCheckoutPage() {
             </div>
             <Input label="Bairro" placeholder="Centro" value={form.neighborhood}
               onChange={e => setForm(f => ({ ...f, neighborhood: e.target.value }))} error={errors.neighborhood} />
-            <div className="grid grid-cols-3 gap-3">
-              <div className="col-span-2">
-                <Input label="Cidade" placeholder="São Paulo" value={form.city}
-                  onChange={e => setForm(f => ({ ...f, city: e.target.value }))} error={errors.city} />
-              </div>
+            <div className="grid grid-cols-[1fr_72px] gap-3">
+              <Input label="Cidade" placeholder="São Paulo" value={form.city}
+                onChange={e => setForm(f => ({ ...f, city: e.target.value }))} error={errors.city} />
               <Input label="UF" placeholder="SP" value={form.state} maxLength={2}
                 onChange={e => setForm(f => ({ ...f, state: e.target.value.toUpperCase() }))} />
             </div>

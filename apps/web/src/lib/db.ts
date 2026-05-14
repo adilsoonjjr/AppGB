@@ -334,9 +334,9 @@ export async function removeFavorite(uid: string, productId: string): Promise<vo
 export async function getExpenses(restaurantId: string, month?: string): Promise<Expense[]> {
   const constraints: QueryConstraint[] = [
     where('restaurantId', '==', restaurantId),
-    orderBy('date', 'desc'),
   ]
   if (month) constraints.push(where('month', '==', month))
+  constraints.push(orderBy('date', 'desc'))
   const q = query(collection(db, 'expenses'), ...constraints)
   const snap = await getDocs(q)
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as Expense))

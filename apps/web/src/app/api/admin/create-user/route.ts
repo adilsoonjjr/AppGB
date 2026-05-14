@@ -6,7 +6,27 @@ export const dynamic = 'force-dynamic'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { callerUid, name, email, password, restaurantId, role } = body
+    const { name, email, password, restaurantId, role } = body
+
+    // Verifica token do chamador via Authorization header
+    const authHeader = req.headers.get('Authorization')
+    const idToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
+    if (!idToken) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
+    let callerUid: string
+    try {
+      const decoded = await adminAuth().verifyIdToken(idToken)
+      callerUid = decoded.uid
+    } catch {
+      return NextResponse.json({ error: 'Token inválido' }, { status: 401 })
+    }
+
+    const callerDoc = await adminDb().collection('users').doc(callerUid).get()
+    if (!callerDoc.exists || callerDoc.data()?.role !== 'superadmin') {
+      return NextResponse.json({ error: 'Apenas superadmin pode criar admins' }, { status: 403 })
+    }
 
     // Valida campos obrigatórios
     if (!email || !password || !restaurantId || !name) {
@@ -14,15 +34,6 @@ export async function POST(req: NextRequest) {
     }
     if (password.length < 6) {
       return NextResponse.json({ error: 'Senha deve ter ao menos 6 caracteres' }, { status: 400 })
-    }
-
-    // Verifica que quem chama é superadmin
-    if (!callerUid) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
-    }
-    const callerDoc = await adminDb().collection('users').doc(callerUid).get()
-    if (!callerDoc.exists || callerDoc.data()?.role !== 'superadmin') {
-      return NextResponse.json({ error: 'Apenas superadmin pode criar admins' }, { status: 403 })
     }
 
     // Cria o usuário no Firebase Auth

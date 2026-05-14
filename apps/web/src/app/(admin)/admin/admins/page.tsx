@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Plus, Store, UserCheck, RefreshCw, Eye, EyeOff, Copy, Check } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
+import { auth } from '@/lib/firebase'
 import { getAllRestaurants, getAdminsByRestaurant, createRestaurant, setAppUser, updateRestaurant } from '@/lib/db'
 import type { Restaurant, AppUser, SubscriptionPlan } from '@/types'
 import Button from '@/components/ui/Button'
@@ -82,11 +83,14 @@ export default function AdminsPage() {
     if (!adminForm.restaurantId) return toast.error('Selecione o restaurante')
     setSaving(true)
     try {
+      const idToken = await auth.currentUser?.getIdToken()
       const res = await fetch('/api/admin/create-user', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
+        },
         body: JSON.stringify({
-          callerUid: appUser?.uid,
           name: adminForm.name,
           email: adminForm.email,
           password: adminForm.password,

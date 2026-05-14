@@ -20,9 +20,22 @@
   html {
     font-family: 'Inter', system-ui, sans-serif;
     -webkit-tap-highlight-color: transparent;
+    /* Previne zoom automático no iOS ao focar inputs */
+    touch-action: manipulation;
   }
   body {
     @apply bg-gray-50 text-gray-900;
+    -webkit-text-size-adjust: 100%;
+  }
+  /* iOS Safari: evita zoom automático em inputs com font-size < 16px */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+  /* Mas mantém a aparência visual menor para desktop */
+  @media (min-width: 640px) {
+    input, textarea, select {
+      font-size: inherit !important;
+    }
   }
 }
 

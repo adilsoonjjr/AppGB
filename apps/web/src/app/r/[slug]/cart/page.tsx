@@ -51,15 +51,15 @@ export default function SlugCartPage() {
               )}
               <p className="text-red-500 font-bold mt-1">{formatCurrency(item.product.price)}</p>
               <div className="flex items-center justify-between mt-2">
-                <div className="flex items-center gap-2 bg-gray-100 rounded-xl p-0.5">
+                <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
                   <button onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white transition">
-                    <Minus size={13} />
+                    className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white active:scale-95 transition">
+                    <Minus size={15} />
                   </button>
-                  <span className="w-6 text-center font-bold text-sm">{item.quantity}</span>
+                  <span className="w-7 text-center font-bold text-sm">{item.quantity}</span>
                   <button onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white transition">
-                    <Plus size={13} />
+                    className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white active:scale-95 transition">
+                    <Plus size={15} />
                   </button>
                 </div>
                 <div className="flex items-center gap-3">

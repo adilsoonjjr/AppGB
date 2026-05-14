@@ -45,15 +45,21 @@ function FinanceiroPageInner() {
 
   const load = async () => {
     setLoading(true)
-    const start = startOfMonth(currentMonth)
-    const end = endOfMonth(currentMonth)
-    const [exps, orders] = await Promise.all([
-      getExpenses(restaurantId, monthKey),
-      getOrdersByDateRange(start, end, restaurantId),
-    ])
-    setExpenses(exps)
-    setRevenue(orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total, 0))
-    setLoading(false)
+    try {
+      const start = startOfMonth(currentMonth)
+      const end = endOfMonth(currentMonth)
+      const [exps, orders] = await Promise.all([
+        getExpenses(restaurantId, monthKey),
+        getOrdersByDateRange(start, end, restaurantId),
+      ])
+      setExpenses(exps)
+      setRevenue(orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total, 0))
+    } catch (err) {
+      console.error('Financeiro load error:', err)
+      toast.error('Erro ao carregar dados financeiros')
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { if (restaurantId) load() }, [restaurantId, monthKey])

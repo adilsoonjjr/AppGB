@@ -103,6 +103,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }, [appUser, pathname, router])
 
+  // Force password change on first login
+  useEffect(() => {
+    if (!appUser || !(appUser as any).mustChangePassword) return
+    if (pathname !== '/admin/settings') {
+      router.replace('/admin/settings')
+    }
+  }, [appUser, pathname, router])
+
   if (loading) return <LoadingSpinner className="min-h-screen" />
   if (!user) return null
 
@@ -179,6 +187,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         {restaurant && <SubscriptionBanner restaurant={restaurant} />}
+
+        {(appUser as any)?.mustChangePassword && (
+          <div className="bg-amber-500 text-white text-sm px-4 py-2.5 flex items-center gap-2">
+            <AlertTriangle size={15} className="flex-shrink-0" />
+            <span className="flex-1 font-medium">
+              Você está usando uma senha provisória. Troque sua senha agora em <strong>Configurações → Segurança</strong>.
+            </span>
+          </div>
+        )}
 
         <main className="flex-1 p-4 lg:p-6 overflow-auto">
           <OrderNotifier />

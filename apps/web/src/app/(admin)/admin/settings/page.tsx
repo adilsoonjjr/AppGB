@@ -13,6 +13,7 @@ import toast from 'react-hot-toast'
 import AdminOnly from '@/components/admin/AdminOnly'
 import { updatePassword, updateEmail, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
+import { setAppUser } from '@/lib/db'
 
 const emptyZone = (): DeliveryZone => ({
   id: crypto.randomUUID(),
@@ -25,7 +26,7 @@ const emptyZone = (): DeliveryZone => ({
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://seuapp.com.br')
 
 function SettingsPageInner() {
-  const { appUser } = useAuth()
+  const { appUser, refreshAppUser } = useAuth()
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -120,6 +121,11 @@ function SettingsPageInner() {
       if (securityForm.newPassword) {
         await updatePassword(currentUser, securityForm.newPassword)
         toast.success('Senha atualizada!')
+      }
+      if (appUser?.uid && (appUser as any).mustChangePassword) {
+        await setAppUser(appUser.uid, { mustChangePassword: false } as any)
+        await refreshAppUser()
+        toast.success('Senha provisória substituída com sucesso!')
       }
       setSecurityForm({ currentPassword: '', newEmail: '', newPassword: '', confirmPassword: '' })
     } catch (e: any) {
@@ -656,6 +662,12 @@ function SettingsPageInner() {
             <p className="text-sm text-gray-500 -mt-2">
               Preencha apenas o que deseja alterar. A senha atual é sempre obrigatória para confirmar.
             </p>
+
+            {(appUser as any)?.mustChangePassword && (
+              <div className="bg-amber-50 border border-amber-300 rounded-xl p-3 text-sm text-amber-800 font-medium">
+                ⚠️ Você está usando uma <strong>senha provisória</strong>. Defina uma nova senha para continuar usando o sistema.
+              </div>
+            )}
 
             <div className="bg-blue-50 rounded-xl p-3 text-xs text-blue-700">
               📧 E-mail atual: <strong>{auth.currentUser?.email || '—'}</strong>
