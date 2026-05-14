@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Plus, Trash2, Save, Store, Truck, CreditCard, MessageCircle, Share2, Image as ImageIcon, Star, Utensils } from 'lucide-react'
+import { Plus, Trash2, Save, Store, Truck, CreditCard, MessageCircle, Share2, Image as ImageIcon, Star, Utensils, ShieldCheck } from 'lucide-react'
 import ImageUpload from '@/components/ui/ImageUpload'
 import { getRestaurant, updateRestaurant } from '@/lib/db'
 import { useAuth } from '@/lib/auth-context'
@@ -11,6 +11,8 @@ import Input from '@/components/ui/Input'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import toast from 'react-hot-toast'
 import AdminOnly from '@/components/admin/AdminOnly'
+import { updatePassword, updateEmail, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth'
+import { auth } from '@/lib/firebase'
 
 const emptyZone = (): DeliveryZone => ({
   id: crypto.randomUUID(),
@@ -27,7 +29,7 @@ function SettingsPageInner() {
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [activeTab, setActiveTab] = useState<'general' | 'operation' | 'daily' | 'delivery' | 'payment' | 'whatsapp' | 'share'>('general')
+  const [activeTab, setActiveTab] = useState<'general' | 'operation' | 'daily' | 'delivery' | 'payment' | 'whatsapp' | 'share' | 'security'>('general')
   const [slugError, setSlugError] = useState('')
 
   const restaurantId = appUser?.restaurantId || process.env.NEXT_PUBLIC_RESTAURANT_ID || 'default'
@@ -90,6 +92,48 @@ function SettingsPageInner() {
       setLoading(false)
     })
   }, [restaurantId])
+
+  const [securityForm, setSecurityForm] = useState({
+    currentPassword: '', newEmail: '', newPassword: '', confirmPassword: '',
+  })
+  const [savingSecurity, setSavingSecurity] = useState(false)
+
+  const handleSecuritySave = async () => {
+    if (!securityForm.currentPassword) return toast.error('Informe a senha atual para confirmar')
+    if (!securityForm.newEmail && !securityForm.newPassword) return toast.error('Informe o novo e-mail ou nova senha')
+    if (securityForm.newPassword && securityForm.newPassword !== securityForm.confirmPassword) {
+      return toast.error('As senhas não coincidem')
+    }
+    if (securityForm.newPassword && securityForm.newPassword.length < 6) {
+      return toast.error('Nova senha deve ter ao menos 6 caracteres')
+    }
+    const currentUser = auth.currentUser
+    if (!currentUser?.email) return toast.error('Usuário não autenticado')
+    setSavingSecurity(true)
+    try {
+      const credential = EmailAuthProvider.credential(currentUser.email, securityForm.currentPassword)
+      await reauthenticateWithCredential(currentUser, credential)
+      if (securityForm.newEmail && securityForm.newEmail !== currentUser.email) {
+        await updateEmail(currentUser, securityForm.newEmail.trim().toLowerCase())
+        toast.success('E-mail atualizado!')
+      }
+      if (securityForm.newPassword) {
+        await updatePassword(currentUser, securityForm.newPassword)
+        toast.success('Senha atualizada!')
+      }
+      setSecurityForm({ currentPassword: '', newEmail: '', newPassword: '', confirmPassword: '' })
+    } catch (e: any) {
+      if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
+        toast.error('Senha atual incorreta')
+      } else if (e.code === 'auth/email-already-in-use') {
+        toast.error('Este e-mail já está em uso')
+      } else {
+        toast.error('Erro ao atualizar: ' + (e.message || 'tente novamente'))
+      }
+    } finally {
+      setSavingSecurity(false)
+    }
+  }
 
   const validateSlug = (value: string) => {
     if (!value) return ''
@@ -157,6 +201,7 @@ function SettingsPageInner() {
     { id: 'payment', label: 'Pagamento', icon: CreditCard },
     { id: 'whatsapp', label: 'WhatsApp', icon: MessageCircle },
     { id: 'share', label: 'Compartilhar', icon: Share2 },
+    { id: 'security', label: 'Segurança', icon: ShieldCheck },
   ]
 
   if (loading) return <LoadingSpinner />
@@ -600,7 +645,66 @@ function SettingsPageInner() {
         </div>
       )}
 
-      {activeTab !== 'share' && (
+      {/* Security */}
+      {activeTab === 'security' && (
+        <div className="space-y-4">
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
+            <div className="flex items-center gap-2 mb-1">
+              <ShieldCheck size={18} className="text-amber-500" />
+              <h3 className="font-bold text-gray-900">Alterar e-mail ou senha</h3>
+            </div>
+            <p className="text-sm text-gray-500 -mt-2">
+              Preencha apenas o que deseja alterar. A senha atual é sempre obrigatória para confirmar.
+            </p>
+
+            <div className="bg-blue-50 rounded-xl p-3 text-xs text-blue-700">
+              📧 E-mail atual: <strong>{auth.currentUser?.email || '—'}</strong>
+            </div>
+
+            <Input
+              label="Novo e-mail (opcional)"
+              type="email"
+              placeholder="novo@email.com"
+              value={securityForm.newEmail}
+              onChange={e => setSecurityForm(f => ({ ...f, newEmail: e.target.value }))}
+            />
+
+            <Input
+              label="Nova senha (opcional)"
+              type="password"
+              placeholder="Mínimo 6 caracteres"
+              value={securityForm.newPassword}
+              onChange={e => setSecurityForm(f => ({ ...f, newPassword: e.target.value }))}
+            />
+
+            {securityForm.newPassword && (
+              <Input
+                label="Confirmar nova senha"
+                type="password"
+                placeholder="Repita a nova senha"
+                value={securityForm.confirmPassword}
+                onChange={e => setSecurityForm(f => ({ ...f, confirmPassword: e.target.value }))}
+              />
+            )}
+
+            <div className="border-t border-gray-100 pt-4">
+              <Input
+                label="Senha atual (obrigatório para confirmar)"
+                type="password"
+                placeholder="Sua senha atual"
+                value={securityForm.currentPassword}
+                onChange={e => setSecurityForm(f => ({ ...f, currentPassword: e.target.value }))}
+              />
+            </div>
+
+            <Button onClick={handleSecuritySave} loading={savingSecurity} className="w-full">
+              <ShieldCheck size={16} /> Salvar alterações de segurança
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {activeTab !== 'share' && activeTab !== 'security' && (
         <div className="flex justify-end">
           <Button onClick={handleSave} loading={saving} size="lg">
             <Save size={16} /> Salvar Configurações

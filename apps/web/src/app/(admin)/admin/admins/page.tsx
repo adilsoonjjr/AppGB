@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Plus, Store, UserCheck, RefreshCw } from 'lucide-react'
+import { Plus, Store, UserCheck, RefreshCw, Eye, EyeOff, Copy, Check } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { getAllRestaurants, getAdminsByRestaurant, createRestaurant, setAppUser, updateRestaurant } from '@/lib/db'
 import type { Restaurant, AppUser, SubscriptionPlan } from '@/types'
@@ -28,8 +28,11 @@ export default function AdminsPage() {
   })
 
   const [adminForm, setAdminForm] = useState({
-    uid: '', name: '', email: '', restaurantId: '', role: 'admin' as 'admin' | 'superadmin',
+    name: '', email: '', password: '', restaurantId: '', role: 'admin' as 'admin' | 'superadmin',
   })
+  const [showPassword, setShowPassword] = useState(false)
+  const [createdCredentials, setCreatedCredentials] = useState<{ email: string; password: string } | null>(null)
+  const [copied, setCopied] = useState(false)
 
   const isSuperAdmin = appUser?.role === 'superadmin'
 
@@ -67,29 +70,49 @@ export default function AdminsPage() {
     }
   }
 
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789@#!'
+    return Array.from({ length: 10 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+  }
+
   const handleCreateAdmin = async () => {
-    if (!adminForm.uid.trim()) return toast.error('UID obrigatório')
+    if (!adminForm.name.trim()) return toast.error('Nome obrigatório')
+    if (!adminForm.email.trim()) return toast.error('E-mail obrigatório')
+    if (!adminForm.password.trim()) return toast.error('Senha obrigatória')
     if (!adminForm.restaurantId) return toast.error('Selecione o restaurante')
     setSaving(true)
     try {
-      await setAppUser(adminForm.uid.trim(), {
-        uid: adminForm.uid.trim(),
-        name: adminForm.name,
-        email: adminForm.email,
-        role: adminForm.role,
-        restaurantId: adminForm.restaurantId,
-        savedAddresses: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+      const res = await fetch('/api/admin/create-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          callerUid: appUser?.uid,
+          name: adminForm.name,
+          email: adminForm.email,
+          password: adminForm.password,
+          restaurantId: adminForm.restaurantId,
+          role: adminForm.role,
+        }),
       })
-      toast.success('Admin configurado!')
+      const data = await res.json()
+      if (!res.ok) return toast.error(data.error || 'Erro ao criar admin')
+      setCreatedCredentials({ email: adminForm.email, password: adminForm.password })
+      toast.success('Admin criado com sucesso!')
       await load()
-      setModalType(null)
     } catch {
-      toast.error('Erro ao configurar admin')
+      toast.error('Erro ao criar admin')
     } finally {
       setSaving(false)
     }
+  }
+
+  const copyCredentials = () => {
+    if (!createdCredentials) return
+    navigator.clipboard.writeText(
+      `Acesso ao sistema:\nE-mail: ${createdCredentials.email}\nSenha provisória: ${createdCredentials.password}\n\nAcesse: ${window.location.origin}/admin/login\n\nTroque sua senha em: Configurações → Segurança`
+    )
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   const handleSetPlan = async (restaurantId: string, plan: SubscriptionPlan) => {
@@ -247,44 +270,99 @@ export default function AdminsPage() {
       </Modal>
 
       {/* Create Admin Modal */}
-      <Modal open={modalType === 'admin'} onClose={() => setModalType(null)} title="Configurar Admin">
-        <div className="space-y-4">
-          <div className="bg-amber-50 rounded-xl p-3 text-xs text-amber-700">
-            <p className="font-semibold mb-1">Como obter o UID do usuário:</p>
-            <p>O usuário deve criar uma conta no sistema primeiro. Depois copie o UID em:</p>
-            <p className="font-mono mt-1">Firebase Console → Authentication → Usuários → copie o User UID</p>
-          </div>
+      <Modal open={modalType === 'admin'} onClose={() => { setModalType(null); setCreatedCredentials(null); setAdminForm({ name: '', email: '', password: '', restaurantId: '', role: 'admin' }) }} title="Novo Administrador">
+        {createdCredentials ? (
+          <div className="space-y-4">
+            <div className="bg-green-50 border border-green-200 rounded-2xl p-4 text-center">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <UserCheck size={22} className="text-green-600" />
+              </div>
+              <p className="font-bold text-green-800">Admin criado com sucesso!</p>
+              <p className="text-sm text-green-600 mt-1">Envie as credenciais abaixo para o dono</p>
+            </div>
 
-          <Input label="UID do usuário (Firebase)" placeholder="uid do firebase auth"
-            value={adminForm.uid} onChange={e => setAdminForm(f => ({ ...f, uid: e.target.value }))} />
-          <Input label="Nome (para referência)" value={adminForm.name}
-            onChange={e => setAdminForm(f => ({ ...f, name: e.target.value }))} />
-          <Input label="E-mail (para referência)" value={adminForm.email}
-            onChange={e => setAdminForm(f => ({ ...f, email: e.target.value }))} />
+            <div className="bg-gray-50 rounded-xl p-4 space-y-2 border border-gray-200">
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Credenciais de acesso</span>
+                <button onClick={copyCredentials} className="flex items-center gap-1 text-xs font-semibold text-amber-600 hover:text-amber-700">
+                  {copied ? <><Check size={13} /> Copiado!</> : <><Copy size={13} /> Copiar tudo</>}
+                </button>
+              </div>
+              <div className="space-y-1.5 mt-2">
+                <div className="flex justify-between bg-white rounded-lg px-3 py-2 border border-gray-100">
+                  <span className="text-xs text-gray-500">E-mail</span>
+                  <span className="text-sm font-mono font-medium text-gray-900">{createdCredentials.email}</span>
+                </div>
+                <div className="flex justify-between bg-white rounded-lg px-3 py-2 border border-gray-100">
+                  <span className="text-xs text-gray-500">Senha provisória</span>
+                  <span className="text-sm font-mono font-bold text-gray-900">{createdCredentials.password}</span>
+                </div>
+                <div className="flex justify-between bg-white rounded-lg px-3 py-2 border border-gray-100">
+                  <span className="text-xs text-gray-500">URL de acesso</span>
+                  <span className="text-sm font-mono text-blue-600">/admin/login</span>
+                </div>
+              </div>
+              <p className="text-xs text-gray-400 mt-2">⚠️ O dono deve trocar a senha em: <strong>Configurações → Segurança</strong></p>
+            </div>
 
-          <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1">Restaurante</label>
-            <select value={adminForm.restaurantId} onChange={e => setAdminForm(f => ({ ...f, restaurantId: e.target.value }))}
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white">
-              <option value="">Selecione o restaurante...</option>
-              {restaurants.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-            </select>
+            <Button className="w-full" onClick={() => { setModalType(null); setCreatedCredentials(null) }}>
+              Fechar
+            </Button>
           </div>
+        ) : (
+          <div className="space-y-4">
+            <Input label="Nome completo" placeholder="João Silva"
+              value={adminForm.name} onChange={e => setAdminForm(f => ({ ...f, name: e.target.value }))} />
 
-          <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1">Função</label>
-            <select value={adminForm.role} onChange={e => setAdminForm(f => ({ ...f, role: e.target.value as any }))}
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white">
-              <option value="admin">Admin (gerencia apenas este restaurante)</option>
-              <option value="superadmin">Superadmin (acesso total)</option>
-            </select>
-          </div>
+            <Input label="E-mail de acesso" type="email" placeholder="joao@restaurante.com"
+              value={adminForm.email} onChange={e => setAdminForm(f => ({ ...f, email: e.target.value }))} />
 
-          <div className="flex gap-2">
-            <Button variant="secondary" className="flex-1" onClick={() => setModalType(null)}>Cancelar</Button>
-            <Button className="flex-1" onClick={handleCreateAdmin} loading={saving}>Salvar Admin</Button>
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1">Senha provisória</label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Mínimo 6 caracteres"
+                    value={adminForm.password}
+                    onChange={e => setAdminForm(f => ({ ...f, password: e.target.value }))}
+                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 pr-10"
+                  />
+                  <button type="button" onClick={() => setShowPassword(s => !s)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                </div>
+                <Button variant="secondary" size="sm" onClick={() => setAdminForm(f => ({ ...f, password: generatePassword() }))}>
+                  Gerar
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1">Restaurante</label>
+              <select value={adminForm.restaurantId} onChange={e => setAdminForm(f => ({ ...f, restaurantId: e.target.value }))}
+                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white">
+                <option value="">Selecione o restaurante...</option>
+                {restaurants.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1">Função</label>
+              <select value={adminForm.role} onChange={e => setAdminForm(f => ({ ...f, role: e.target.value as any }))}
+                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white">
+                <option value="admin">Admin — gerencia apenas este restaurante</option>
+                <option value="superadmin">Superadmin — acesso total ao sistema</option>
+              </select>
+            </div>
+
+            <div className="flex gap-2 pt-1">
+              <Button variant="secondary" className="flex-1" onClick={() => setModalType(null)}>Cancelar</Button>
+              <Button className="flex-1" onClick={handleCreateAdmin} loading={saving}>Criar Admin</Button>
+            </div>
           </div>
-        </div>
+        )}
       </Modal>
     </div>
   )
