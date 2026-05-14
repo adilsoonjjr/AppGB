@@ -83,7 +83,8 @@ export default function AdminsPage() {
     if (!adminForm.restaurantId) return toast.error('Selecione o restaurante')
     setSaving(true)
     try {
-      const idToken = await auth.currentUser?.getIdToken()
+      const idToken = await auth.currentUser?.getIdToken(true)
+      if (!idToken) return toast.error('Sessão expirada. Faça login novamente.')
       const res = await fetch('/api/admin/create-user', {
         method: 'POST',
         headers: {
