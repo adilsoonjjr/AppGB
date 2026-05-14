@@ -390,7 +390,7 @@ function LoginGate({ onBrowse }: { onBrowse: () => void }) {
 
 // ---------- Menu ----------
 
-function MenuContent() {
+function MenuContent({ onLogout }: { onLogout: () => void }) {
   const { restaurant, restaurantId, slug } = useRestaurant()
   const { user, appUser, logout } = useAuth()
   const router = useRouter()
@@ -500,7 +500,7 @@ function MenuContent() {
                           Meu Perfil
                         </button>
                         <button
-                          onClick={() => { logout(); setUserMenuOpen(false) }}
+                          onClick={() => { setUserMenuOpen(false); onLogout() }}
                           className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 transition border-t border-gray-100"
                         >
                           <LogOut size={15} />
@@ -595,7 +595,7 @@ function MenuContent() {
 // ---------- Page ----------
 
 export default function RestaurantMenuPage() {
-  const { user, loading } = useAuth()
+  const { user, loading, logout } = useAuth()
   const [browsing, setBrowsing] = useState(false)
 
   useEffect(() => {
@@ -609,11 +609,17 @@ export default function RestaurantMenuPage() {
     setBrowsing(true)
   }
 
+  const handleLogout = () => {
+    sessionStorage.removeItem('guest-browsing')
+    setBrowsing(false)
+    logout()
+  }
+
   if (loading) return <LoadingSpinner className="min-h-screen" />
 
   if (!user && !browsing) {
     return <LoginGate onBrowse={handleBrowse} />
   }
 
-  return <MenuContent />
+  return <MenuContent onLogout={handleLogout} />
 }
