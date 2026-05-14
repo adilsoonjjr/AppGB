@@ -509,7 +509,7 @@ function MenuContent({ onLogout }: { onLogout: () => void }) {
                       </>
                     ) : (
                       <button
-                        onClick={() => { setUserMenuOpen(false); window.location.reload() }}
+                        onClick={() => { setUserMenuOpen(false); sessionStorage.removeItem('guest-browsing'); window.location.reload() }}
                         className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition"
                       >
                         <LogIn size={15} className="text-gray-400" />
