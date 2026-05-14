@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2, GripVertical } from 'lucide-react'
 import { getCategories, createCategory, updateCategory, deleteCategory } from '@/lib/db'
 import { useAuth } from '@/lib/auth-context'
+import AdminOnly from '@/components/admin/AdminOnly'
 import type { Category } from '@/types'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -13,7 +14,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 const EMOJI_OPTIONS = ['🍕', '🍔', '🌮', '🍣', '🍜', '🥗', '🍗', '🥩', '🍝', '🍱', '🍰', '🧁', '☕', '🥤', '🍺', '🍷', '🥂', '🧃', '🌮', '🍟']
 
-export default function CategoriesPage() {
+function CategoriesPageInner() {
   const { appUser } = useAuth()
   const restaurantId = appUser?.restaurantId || process.env.NEXT_PUBLIC_RESTAURANT_ID || 'default'
 
@@ -175,4 +176,8 @@ export default function CategoriesPage() {
       </Modal>
     </div>
   )
+}
+
+export default function CategoriesPage() {
+  return <AdminOnly><CategoriesPageInner /></AdminOnly>
 }

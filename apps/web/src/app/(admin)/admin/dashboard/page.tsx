@@ -9,6 +9,7 @@ import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '@/types'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import Badge from '@/components/ui/Badge'
 import Link from 'next/link'
+import AdminOnly from '@/components/admin/AdminOnly'
 
 function StatCard({ title, value, sub, icon, color }: { title: string; value: string; sub?: string; icon: React.ReactNode; color: string }) {
   return (
@@ -25,7 +26,7 @@ function StatCard({ title, value, sub, icon, color }: { title: string; value: st
   )
 }
 
-export default function DashboardPage() {
+function DashboardPageInner() {
   const { appUser } = useAuth()
   const restaurantId = appUser?.restaurantId || process.env.NEXT_PUBLIC_RESTAURANT_ID || 'default'
   const [orders, setOrders] = useState<Order[]>([])
@@ -199,4 +200,8 @@ export default function DashboardPage() {
       </div>
     </div>
   )
+}
+
+export default function DashboardPage() {
+  return <AdminOnly><DashboardPageInner /></AdminOnly>
 }

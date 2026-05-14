@@ -2,10 +2,12 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { Plus, Clock, Flame, Tag } from 'lucide-react'
+import { Plus, Clock, Flame, Tag, Heart } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import type { Product } from '@/types'
 import ProductModal from './ProductModal'
+import { useFavorites } from '@/lib/favorites-context'
+import { useAuth } from '@/lib/auth-context'
 
 interface ProductCardProps {
   product: Product
@@ -13,6 +15,8 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const [modalOpen, setModalOpen] = useState(false)
+  const { isFavorite, toggle } = useFavorites()
+  const { user } = useAuth()
 
   if (!product.available) return null
 
@@ -82,6 +86,17 @@ export default function ProductCard({ product }: ProductCardProps) {
         {product.imageUrl && (
           <div className="relative w-32 h-32 flex-shrink-0">
             <Image src={product.imageUrl} alt={product.name} fill className="object-cover" sizes="128px" />
+            {user && (
+              <button
+                onClick={e => { e.stopPropagation(); toggle(product.id) }}
+                className="absolute top-1.5 right-1.5 w-7 h-7 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow transition hover:scale-110"
+              >
+                <Heart
+                  size={14}
+                  className={isFavorite(product.id) ? 'text-red-500 fill-red-500' : 'text-gray-400'}
+                />
+              </button>
+            )}
           </div>
         )}
       </div>

@@ -24,6 +24,7 @@ export interface Product {
   promotionalPrice?: number
   promotionLabel?: string
   isFeatured?: boolean
+  options?: ProductOption[]
   createdAt: string
   updatedAt: string
 }
@@ -133,10 +134,32 @@ export interface Coupon {
   updatedAt: string
 }
 
+export interface ProductOptionItem {
+  id: string
+  name: string
+  priceModifier: number  // 0 = gratuito, positivo = adicional
+}
+
+export interface ProductOption {
+  id: string
+  name: string          // ex: "Tamanho", "Adicionais"
+  required: boolean
+  min: number           // mínimo de seleções
+  max: number           // máximo de seleções (1 = radio, >1 = checkbox)
+  items: ProductOptionItem[]
+}
+
+export interface SelectedOption {
+  optionId: string
+  optionName: string
+  items: { id: string; name: string; priceModifier: number }[]
+}
+
 export interface CartItem {
   product: Product
   quantity: number
   observations?: string
+  selectedOptions?: SelectedOption[]
 }
 
 export type OrderType = 'delivery' | 'pickup' | 'dine_in'
@@ -156,6 +179,7 @@ export interface OrderItem {
   productPrice: number
   quantity: number
   observations?: string
+  selectedOptions?: SelectedOption[]
   subtotal: number
 }
 
@@ -206,6 +230,33 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   delivering: 'Saiu para Entrega',
   delivered: 'Entregue',
   cancelled: 'Cancelado',
+}
+
+export type ExpenseCategory = 'fixed' | 'variable' | 'personal'
+
+export interface Expense {
+  id: string
+  restaurantId: string
+  description: string
+  amount: number
+  category: ExpenseCategory
+  date: string        // ISO date string
+  month: string       // YYYY-MM
+  notes?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
+  fixed: 'Gasto Fixo',
+  variable: 'Gasto Variável',
+  personal: 'Retirada Pessoal',
+}
+
+export const EXPENSE_CATEGORY_COLORS: Record<ExpenseCategory, string> = {
+  fixed: '#3b82f6',
+  variable: '#f97316',
+  personal: '#8b5cf6',
 }
 
 export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {

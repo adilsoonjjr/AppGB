@@ -16,7 +16,7 @@ export default function CartButton() {
   const cartUrl = slug ? `/r/${slug}/cart` : '/cart'
 
   return (
-    <div className="fixed bottom-6 left-4 right-4 z-40">
+    <div className="fixed bottom-0 left-0 right-0 z-40 px-4 pb-safe-6">
       <button
         onClick={() => router.push(cartUrl)}
         className="w-full max-w-lg mx-auto flex items-center justify-between bg-amber-500 text-white px-5 py-4 rounded-2xl shadow-2xl shadow-amber-500/30 hover:bg-amber-600 transition-all duration-200 active:scale-[0.98]"

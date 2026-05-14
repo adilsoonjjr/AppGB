@@ -10,6 +10,7 @@ import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import toast from 'react-hot-toast'
+import AdminOnly from '@/components/admin/AdminOnly'
 
 const emptyZone = (): DeliveryZone => ({
   id: crypto.randomUUID(),
@@ -21,7 +22,7 @@ const emptyZone = (): DeliveryZone => ({
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://seuapp.com.br')
 
-export default function SettingsPage() {
+function SettingsPageInner() {
   const { appUser } = useAuth()
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null)
   const [loading, setLoading] = useState(true)
@@ -582,4 +583,8 @@ export default function SettingsPage() {
       )}
     </div>
   )
+}
+
+export default function SettingsPage() {
+  return <AdminOnly><SettingsPageInner /></AdminOnly>
 }

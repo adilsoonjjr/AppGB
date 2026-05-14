@@ -1,14 +1,16 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { subscribeToOrders } from '@/lib/db'
 import { useAuth } from '@/lib/auth-context'
 import type { Order } from '@/types'
 import toast from 'react-hot-toast'
-import { ShoppingBag } from 'lucide-react'
+import { ShoppingBag, ArrowRight } from 'lucide-react'
 
 export default function OrderNotifier() {
   const { appUser } = useAuth()
+  const router = useRouter()
   const restaurantId = appUser?.restaurantId || process.env.NEXT_PUBLIC_RESTAURANT_ID || 'default'
   const knownOrders = useRef<Set<string>>(new Set())
   const initialized = useRef(false)
@@ -30,21 +32,25 @@ export default function OrderNotifier() {
           // Notificação visual
           toast(
             t => (
-              <div className="flex items-center gap-3">
+              <button
+                onClick={() => { toast.dismiss(t.id); router.push('/admin/orders') }}
+                className="flex items-center gap-3 w-full text-left"
+              >
                 <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
                   <ShoppingBag size={18} className="text-red-500" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="font-bold text-gray-900 text-sm">
                     🔔 Novo Pedido #{order.orderNumber}
                   </p>
                   <p className="text-gray-500 text-xs">{order.customerName}</p>
                 </div>
-              </div>
+                <ArrowRight size={16} className="text-gray-400 flex-shrink-0" />
+              </button>
             ),
             {
               duration: 8000,
-              style: { background: 'white', color: '#111827', borderRadius: '16px', boxShadow: '0 8px 24px rgba(0,0,0,0.15)', padding: '12px' },
+              style: { background: 'white', color: '#111827', borderRadius: '16px', boxShadow: '0 8px 24px rgba(0,0,0,0.15)', padding: '12px', cursor: 'pointer' },
             }
           )
 

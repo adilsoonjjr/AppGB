@@ -164,14 +164,19 @@ export default function CheckoutPage() {
       const orderId = await createOrder({
         orderNumber,
         restaurantId: RESTAURANT_ID,
-        items: items.map(i => ({
-          productId: i.product.id,
-          productName: i.product.name,
-          productPrice: i.product.isPromotion && i.product.promotionalPrice ? i.product.promotionalPrice : i.product.price,
-          quantity: i.quantity,
-          observations: i.observations,
-          subtotal: (i.product.isPromotion && i.product.promotionalPrice ? i.product.promotionalPrice : i.product.price) * i.quantity,
-        })),
+        items: items.map(i => {
+          const base = i.product.isPromotion && i.product.promotionalPrice ? i.product.promotionalPrice : i.product.price
+          const extra = i.selectedOptions?.reduce((s, o) => s + o.items.reduce((ss, it) => ss + it.priceModifier, 0), 0) ?? 0
+          return {
+            productId: i.product.id,
+            productName: i.product.name,
+            productPrice: base + extra,
+            quantity: i.quantity,
+            observations: i.observations,
+            selectedOptions: i.selectedOptions,
+            subtotal: (base + extra) * i.quantity,
+          }
+        }),
         subtotal: total,
         deliveryFee: orderType === 'delivery' ? effectiveDeliveryFee : 0,
         total: finalTotal,
@@ -453,12 +458,23 @@ export default function CheckoutPage() {
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
           <h2 className="font-semibold text-gray-800 mb-4 text-base">Resumo do pedido</h2>
           <div className="space-y-2">
-            {items.map(item => (
-              <div key={item.product.id} className="flex justify-between text-sm">
-                <span className="text-gray-600">{item.quantity}x {item.product.name}</span>
-                <span className="font-medium">{formatCurrency((item.product.isPromotion && item.product.promotionalPrice ? item.product.promotionalPrice : item.product.price) * item.quantity)}</span>
-              </div>
-            ))}
+            {items.map(item => {
+              const base = item.product.isPromotion && item.product.promotionalPrice ? item.product.promotionalPrice : item.product.price
+              const extra = item.selectedOptions?.reduce((s, o) => s + o.items.reduce((ss, i) => ss + i.priceModifier, 0), 0) ?? 0
+              return (
+                <div key={item.key} className="flex justify-between text-sm">
+                  <div>
+                    <span className="text-gray-600">{item.quantity}x {item.product.name}</span>
+                    {item.selectedOptions && item.selectedOptions.length > 0 && (
+                      <p className="text-xs text-gray-400">
+                        {item.selectedOptions.flatMap(o => o.items.map(i => i.name)).join(', ')}
+                      </p>
+                    )}
+                  </div>
+                  <span className="font-medium">{formatCurrency((base + extra) * item.quantity)}</span>
+                </div>
+              )
+            })}
           </div>
           <div className="border-t border-gray-100 mt-3 pt-3 space-y-1.5">
             <div className="flex justify-between text-sm text-gray-500">

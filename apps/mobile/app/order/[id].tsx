@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Linking } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Linking, Alert } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, router } from 'expo-router'
-import { onSnapshot, doc, getDoc } from 'firebase/firestore'
+import { onSnapshot, doc, getDoc, updateDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 
 const AMBER = '#d97706'
@@ -41,6 +41,7 @@ export default function OrderTrackingScreen() {
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
   const [whatsapp, setWhatsapp] = useState<string | null>(null)
+  const [cancelling, setCancelling] = useState(false)
 
   useEffect(() => {
     getDoc(doc(db, 'restaurants', RESTAURANT_ID)).then(snap => {
@@ -63,6 +64,34 @@ export default function OrderTrackingScreen() {
 
   const isCancelled = order.status === 'cancelled'
   const isDelivered = order.status === 'delivered'
+  const canCancel = order.status === 'pending'
+
+  const handleCancel = () => {
+    Alert.alert(
+      'Cancelar pedido',
+      'Tem certeza que deseja cancelar este pedido?',
+      [
+        { text: 'Não', style: 'cancel' },
+        {
+          text: 'Sim, cancelar',
+          style: 'destructive',
+          onPress: async () => {
+            setCancelling(true)
+            try {
+              await updateDoc(doc(db, 'orders', order.id), {
+                status: 'cancelled',
+                updatedAt: new Date().toISOString(),
+              })
+            } catch {
+              Alert.alert('Erro', 'Não foi possível cancelar o pedido.')
+            } finally {
+              setCancelling(false)
+            }
+          },
+        },
+      ]
+    )
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
@@ -145,6 +174,18 @@ export default function OrderTrackingScreen() {
         <TouchableOpacity style={styles.menuBtn} onPress={() => router.push('/')}>
           <Text style={styles.menuBtnText}>🏠 Voltar ao Cardápio</Text>
         </TouchableOpacity>
+
+        {canCancel && (
+          <TouchableOpacity
+            style={styles.cancelBtn}
+            onPress={handleCancel}
+            disabled={cancelling}
+          >
+            <Text style={styles.cancelBtnText}>
+              {cancelling ? 'Cancelando...' : '❌ Cancelar pedido'}
+            </Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </SafeAreaView>
   )
@@ -182,4 +223,6 @@ const styles = StyleSheet.create({
   whatsappBtnText: { color: 'white', fontWeight: '700', fontSize: 14 },
   menuBtn: { backgroundColor: '#f3f4f6', borderRadius: 14, padding: 14, alignItems: 'center', marginTop: 4 },
   menuBtnText: { fontWeight: '700', fontSize: 14, color: '#374151' },
+  cancelBtn: { borderRadius: 14, padding: 14, alignItems: 'center', marginTop: 4, borderWidth: 1, borderColor: '#fca5a5' },
+  cancelBtnText: { fontWeight: '700', fontSize: 14, color: '#ef4444' },
 })

@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { CheckCircle, Clock, ChefHat, Truck, Star, Home, QrCode, MessageCircle, Utensils } from 'lucide-react'
-import { subscribeToOrder, rateOrder } from '@/lib/db'
+import { CheckCircle, Clock, ChefHat, Truck, Star, Home, QrCode, MessageCircle, Utensils, XCircle } from 'lucide-react'
+import { subscribeToOrder, rateOrder, cancelOrder } from '@/lib/db'
 import type { Order, OrderStatus } from '@/types'
 import { ORDER_STATUS_LABELS, ORDER_TYPE_LABELS } from '@/types'
 import { formatCurrency, formatDate } from '@/lib/utils'
@@ -122,6 +122,7 @@ export default function OrderTrackingPage() {
   const [pixOpen, setPixOpen] = useState(false)
   const [ratingOpen, setRatingOpen] = useState(false)
   const [ratingShown, setRatingShown] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
 
   useEffect(() => {
     const unsub = subscribeToOrder(id, o => {
@@ -153,6 +154,20 @@ export default function OrderTrackingPage() {
   const currentIdx = getStepIndex(order.status)
   const isCancelled = order.status === 'cancelled'
   const isDelivered = order.status === 'delivered'
+  const canCancel = order.status === 'pending'
+
+  const handleCancel = async () => {
+    if (!window.confirm('Tem certeza que deseja cancelar este pedido?')) return
+    setCancelling(true)
+    try {
+      await cancelOrder(order.id)
+      toast.success('Pedido cancelado.')
+    } catch {
+      toast.error('Não foi possível cancelar o pedido.')
+    } finally {
+      setCancelling(false)
+    }
+  }
 
   const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || ''
 
@@ -336,6 +351,17 @@ export default function OrderTrackingPage() {
           <Home size={18} />
           Voltar ao Cardápio
         </Button>
+
+        {canCancel && (
+          <button
+            onClick={handleCancel}
+            disabled={cancelling}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-red-200 text-red-500 hover:bg-red-50 font-semibold text-sm transition disabled:opacity-50"
+          >
+            <XCircle size={16} />
+            {cancelling ? 'Cancelando...' : 'Cancelar pedido'}
+          </button>
+        )}
       </div>
 
       <PixModal open={pixOpen} onClose={() => setPixOpen(false)}
