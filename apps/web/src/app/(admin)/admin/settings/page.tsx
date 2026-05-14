@@ -33,11 +33,12 @@ function SettingsPageInner() {
   const restaurantId = appUser?.restaurantId || process.env.NEXT_PUBLIC_RESTAURANT_ID || 'default'
 
   const [form, setForm] = useState({
-    name: '', phone: '', address: '', city: '', state: '',
+    name: '', phone: '', email: '', address: '', city: '', state: '',
     primaryColor: '#D97706',
     logo: '',
     coverImage: '',
     slug: '',
+    mapsUrl: '',
     estimatedDeliveryTime: 40, estimatedPickupTime: 20,
     deliveryEnabled: true,
     dineInEnabled: true,
@@ -60,6 +61,7 @@ function SettingsPageInner() {
         setForm({
           name: r.name || '',
           phone: r.phone || '',
+          email: r.email || '',
           address: r.address || '',
           city: r.city || '',
           state: r.state || '',
@@ -67,6 +69,7 @@ function SettingsPageInner() {
           logo: r.logo || '',
           coverImage: r.coverImage || '',
           slug: r.slug || '',
+          mapsUrl: (r as any).mapsUrl || '',
           estimatedDeliveryTime: r.estimatedDeliveryTime || 40,
           estimatedPickupTime: r.estimatedPickupTime || 20,
           deliveryEnabled: r.deliveryEnabled ?? true,
@@ -109,11 +112,13 @@ function SettingsPageInner() {
     try {
       await updateRestaurant(restaurantId, {
         name: form.name, phone: form.phone,
+        email: form.email || undefined,
         address: form.address, city: form.city, state: form.state,
         primaryColor: form.primaryColor,
         logo: form.logo || undefined,
         coverImage: form.coverImage || undefined,
         slug: form.slug || undefined,
+        ...(form.mapsUrl ? { mapsUrl: form.mapsUrl } : {}),
         estimatedDeliveryTime: Number(form.estimatedDeliveryTime),
         estimatedPickupTime: Number(form.estimatedPickupTime),
         deliveryEnabled: form.deliveryEnabled,
@@ -206,8 +211,11 @@ function SettingsPageInner() {
           />
 
           <Input label="Nome do Restaurante" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
-          <Input label="Telefone" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
-          <Input label="Endereço" value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} />
+          <div className="grid grid-cols-2 gap-3">
+            <Input label="Telefone" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
+            <Input label="E-mail oficial" type="email" placeholder="contato@restaurante.com" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+          </div>
+          <Input label="Endereço completo" placeholder="Rua, número, bairro" value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} />
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-2">
               <Input label="Cidade" value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} />
@@ -229,6 +237,24 @@ function SettingsPageInner() {
               value={form.slug} onChange={e => handleSlugChange(e.target.value)} error={slugError} />
             {form.slug && !slugError && (
               <p className="text-xs text-green-600 mt-1">✅ URL: <span className="font-mono">{APP_URL}/r/{form.slug}</span></p>
+            )}
+          </div>
+
+          <div>
+            <Input
+              label="Link do Google Maps"
+              placeholder="Cole o link de compartilhamento do Google Maps"
+              value={form.mapsUrl}
+              onChange={e => setForm(f => ({ ...f, mapsUrl: e.target.value }))}
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              No Google Maps: clique em <strong>Compartilhar → Copiar link</strong> e cole aqui. Aparece no cardápio para os clientes.
+            </p>
+            {form.mapsUrl && (
+              <a href={form.mapsUrl} target="_blank" rel="noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline mt-1">
+                🗺️ Testar link
+              </a>
             )}
           </div>
 

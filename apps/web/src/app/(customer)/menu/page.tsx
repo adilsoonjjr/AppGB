@@ -341,6 +341,43 @@ export default function MenuPage() {
         )}
       </div>
 
+      {/* Localização */}
+      {(restaurant?.address || restaurant?.mapsUrl) && (
+        <div className="mx-4 mb-6 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">📍</span>
+              <h2 className="font-bold text-gray-900 text-sm">Onde estamos</h2>
+            </div>
+            {restaurant.mapsUrl && (
+              <a
+                href={restaurant.mapsUrl}
+                target="_blank" rel="noopener noreferrer"
+                className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+              >
+                Abrir no Maps →
+              </a>
+            )}
+          </div>
+          {restaurant.address && (
+            <p className="px-4 py-2 text-sm text-gray-600">
+              {restaurant.address}{restaurant.city ? `, ${restaurant.city}` : ''}{restaurant.state ? ` - ${restaurant.state}` : ''}
+            </p>
+          )}
+          {restaurant.mapsUrl && (
+            <div className="relative w-full" style={{ paddingBottom: '45%' }}>
+              <iframe
+                src={restaurant.mapsUrl.includes('embed') ? restaurant.mapsUrl : `https://maps.google.com/maps?q=${encodeURIComponent(`${restaurant.address || ''} ${restaurant.city || ''} ${restaurant.state || ''}`.trim())}&output=embed`}
+                className="absolute inset-0 w-full h-full border-0"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Localização do restaurante"
+              />
+            </div>
+          )}
+        </div>
+      )}
+
       {/* WhatsApp floating button */}
       {whatsappNumber && (
         <a
