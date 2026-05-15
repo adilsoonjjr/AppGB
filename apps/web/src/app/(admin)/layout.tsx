@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { useRouter, usePathname } from 'next/navigation'
 import {
@@ -9,8 +9,12 @@ import {
 import Link from 'next/link'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import OrderNotifier from '@/components/admin/OrderNotifier'
+import InactivityWarningModal from '@/components/admin/InactivityWarningModal'
+import { useInactivityTimeout } from '@/lib/use-inactivity-timeout'
 import { getRestaurant } from '@/lib/db'
 import type { Restaurant } from '@/types'
+
+const WARNING_DURATION_S = 120 // 2 minutos em segundos
 
 type NavItem = { href: string; label: string; icon: React.ElementType; superadminOnly?: boolean; adminOnly?: boolean }
 
@@ -81,6 +85,40 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null)
+  const [showWarning, setShowWarning] = useState(false)
+  const [countdown, setCountdown] = useState(WARNING_DURATION_S)
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const stopCountdown = useCallback(() => {
+    if (countdownRef.current) clearInterval(countdownRef.current)
+    setShowWarning(false)
+    setCountdown(WARNING_DURATION_S)
+  }, [])
+
+  const handleWarning = useCallback(() => {
+    setShowWarning(true)
+    setCountdown(WARNING_DURATION_S)
+    countdownRef.current = setInterval(() => {
+      setCountdown(prev => (prev > 0 ? prev - 1 : 0))
+    }, 1000)
+  }, [])
+
+  const handleLogout = useCallback(async () => {
+    stopCountdown()
+    await logout()
+    router.push('/')
+  }, [logout, router, stopCountdown])
+
+  const handleStay = useCallback(() => {
+    stopCountdown()
+  }, [stopCountdown])
+
+  useInactivityTimeout({
+    enabled: !!user,
+    onWarning: handleWarning,
+    onLogout: handleLogout,
+    onActivity: stopCountdown,
+  })
 
   useEffect(() => {
     if (!loading && !user) {
@@ -116,6 +154,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="flex min-h-screen bg-gray-50">
+      <InactivityWarningModal
+        open={showWarning}
+        secondsLeft={countdown}
+        onStay={handleStay}
+        onLogout={handleLogout}
+      />
       {/* Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white flex flex-col transition-transform duration-300 ${
